@@ -3,23 +3,14 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>SIJ!Style</title>
+    <title>VOOM Clone with Account</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <style>
-        /* スマホ向けのスクロール感を出すための調整 */
-        body {
-            background-color: #f3f4f6;
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-        }
-        .main-container {
-            max-width: 500px;
-            margin: 0 auto;
-            background-color: #ffffff;
-            min-height: 100vh;
-        }
-    </style>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <style>
+        body { background-color: #f3f4f6; font-family: sans-serif; }
+        .main-container { max-width: 500px; margin: 0 auto; background-color: #ffffff; min-height: 100vh; }
+    </style>
 </head>
 <body>
 
@@ -27,14 +18,54 @@
         
         <header class="sticky top-0 bg-white border-b border-gray-200 p-4 flex justify-between items-center z-10">
             <h1 class="text-xl font-bold text-green-600">VOOM Clone</h1>
-            <button onclick="openPostModal()" class="bg-green-500 text-white px-4 py-2 rounded-full text-sm font-bold hover:bg-green-600 transition">
-                <i class="fa-solid fa-pen mr-1"></i> 投稿する
-            </button>
+            <div class="flex items-center space-x-2">
+                <div id="userInfo" class="hidden flex items-center space-x-2">
+                    <img id="myAvatar" class="w-8 h-8 rounded-full border" src="" alt="my avatar">
+                    <span id="myName" class="text-sm font-bold text-gray-700"></span>
+                </div>
+                <button id="postBtn" onclick="openPostModal()" class="hidden bg-green-500 text-white px-3 py-1.5 rounded-full text-xs font-bold hover:bg-green-600">
+                    <i class="fa-solid fa-pen"></i> 投稿
+                </button>
+                <button id="authBtn" onclick="openAuthModal()" class="bg-gray-200 text-gray-700 px-3 py-1.5 rounded-full text-xs font-bold hover:bg-gray-300">
+                    ログイン/作成
+                </button>
+            </div>
         </header>
 
-        <main id="timeline" class="flex-1 p-4 space-y-6 pb-24">
-            </main>
+        <div id="profileBar" class="hidden bg-gray-50 p-3 border-b border-gray-100 text-xs text-gray-600">
+            <span class="font-bold">自己紹介:</span> <span id="myBio">未設定</span>
+        </div>
 
+        <main id="timeline" class="flex-1 p-4 space-y-6 pb-24">
+            <div class="text-center text-gray-500 py-10">読み込み中...</div>
+        </main>
+
+    </div>
+
+    <div id="authModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center hidden z-50 p-4">
+        <div class="bg-white rounded-lg w-full max-w-md p-6">
+            <div class="flex justify-between items-center mb-4">
+                <h3 id="authTitle" class="text-lg font-bold">簡易アカウント作成</h3>
+                <button onclick="closeAuthModal()" class="text-gray-500 hover:text-gray-800 text-xl">&times;</button>
+            </div>
+            
+            <div class="space-y-3">
+                <input id="authEmail" type="email" class="w-full border p-2 rounded text-sm" placeholder="メールアドレス（ログイン用）">
+                <input id="authPassword" type="password" class="w-full border p-2 rounded text-sm" placeholder="パスワード（6文字以上）">
+                
+                <div id="profileFields" class="space-y-3 border-t pt-3">
+                    <p class="text-xs text-gray-500 font-bold">プロフィール設定</p>
+                    <input id="profileName" type="text" class="w-full border p-2 rounded text-sm" placeholder="表示されるユーザー名">
+                    <input id="profileBio" type="text" class="w-full border p-2 rounded text-sm" placeholder="自己紹介（一言）">
+                    <input id="profileAvatar" type="text" class="w-full border p-2 rounded text-sm" placeholder="アイコン画像URL (空欄なら初期画像)">
+                </div>
+
+                <div class="flex flex-col gap-2 pt-2">
+                    <button id="authSubmitBtn" onclick="handleAuthSubmit()" class="w-full bg-green-500 text-white py-2 rounded font-bold hover:bg-green-600 text-sm">アカウントを作成する</button>
+                    <button id="authToggleBtn" onclick="toggleAuthMode()" class="text-xs text-gray-500 underline hover:text-gray-700">すでにアカウントをお持ちの方（ログイン）</button>
+                </div>
+            </div>
+        </div>
     </div>
 
     <div id="postModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center hidden z-50 p-4">
@@ -44,184 +75,201 @@
                 <button onclick="closePostModal()" class="text-gray-500 hover:text-gray-800 text-xl">&times;</button>
             </div>
             <textarea id="postText" class="w-full border border-gray-300 rounded p-2 h-24 resize-none mb-4" placeholder="今なにしてる？"></textarea>
-            <input id="postMedia" type="text" class="w-full border border-gray-300 rounded p-2 mb-4 text-sm" placeholder="画像URL (空欄でもOK。例: https://picsum.photos/600/400)">
+            <input id="postMedia" type="text" class="w-full border border-gray-300 rounded p-2 mb-4 text-sm" placeholder="画像URL (空欄OK)">
             <button onclick="submitPost()" class="w-full bg-green-500 text-white py-2 rounded font-bold hover:bg-green-600">投稿する</button>
         </div>
     </div>
 
     <script>
-        // 初期ダミーデータ (LINE VOOM風)
-        let posts = [
-            {
-                id: 1,
-                author: "ケンタ",
-                avatar: "https://api.dicebear.com/7.x/adventurer/svg?seed=Kenta",
-                content: "今日のご飯！めちゃくちゃ美味しかった！！",
-                media: "https://images.unsplash.com/photo-1565299624946-b28f40a0ae38?w=600&auto=format&fit=crop&q=60",
-                likes: 12,
-                hasLiked: false,
-                comments: [
-                    { author: "ミク", text: "おいしそう〜！どこ outlets？" }
-                ]
-            },
-            {
-                id: 2,
-                author: "サクラ",
-                avatar: "https://api.dicebear.com/7.x/adventurer/svg?seed=Sakura",
-                content: "散歩中に綺麗な空が見えたのでシェアします ☁️",
-                media: "https://images.unsplash.com/photo-1506744038136-46273834b3fb?w=600&auto=format&fit=crop&q=60",
-                likes: 45,
-                hasLiked: false,
-                comments: []
+        // ==========================================
+        // 【超重要】例のキーをここに貼り付けます！
+        // ==========================================
+        const EX_URL = "https://あなたのプロジェクトID.supabase.co";
+        const EX_KEY = "あなたのanonキー";
+        
+        // 例のシステムを立ち上げる
+        const exClient = supabase.createClient(EX_URL, EX_KEY);
+
+        let currentUser = null;
+        let isSignUpMode = true;
+
+        // 起動時にログイン状態のチェックと投稿の読み込みを行う
+        window.onload = async () => {
+            checkUser();
+            fetchAndRenderPosts();
+        };
+
+        // ログイン状態の確認
+        async function checkUser() {
+            const { data: { user } } = await exClient.auth.getUser();
+            if (user) {
+                currentUser = user;
+                
+                // ユーザーのプロフィール情報を「例の場所」から持ってくる
+                const { data: profile } = await exClient
+                    .from('profiles')
+                    .select('*')
+                    .eq('id', user.id)
+                    .single();
+
+                if (profile) {
+                    document.getElementById('userInfo').classList.remove('hidden');
+                    document.getElementById('profileBar').classList.remove('hidden');
+                    document.getElementById('postBtn').classList.remove('hidden');
+                    document.getElementById('authBtn').classList.add('hidden');
+                    
+                    document.getElementById('myAvatar').src = profile.avatar_url || "https://api.dicebear.com/7.x/adventurer/svg?seed=" + profile.username;
+                    document.getElementById('myName').innerText = profile.username;
+                    document.getElementById('myBio').innerText = profile.bio || "未設定";
+                }
             }
-        ];
+        }
 
-        const timeline = document.getElementById('timeline');
+        // 投稿一覧を「例の場所」から引っ張ってきて表示する
+        async function fetchAndRenderPosts() {
+            const timeline = document.getElementById('timeline');
+            
+            // 投稿データを最新順に取得（投稿者プロフィールも同時に紐付け）
+            const { data: posts, error } = await exClient
+                .from('posts')
+                .select(`
+                    id, content, media_url, created_at,
+                    profiles ( username, avatar_url )
+                `)
+                .order('created_at', { ascending: false });
 
-        // タイムラインを描画する関数
-        function renderTimeline() {
+            if (error || !posts) {
+                timeline.innerHTML = `<div class="text-center text-red-500 py-10">データの読み込みに失敗しました</div>`;
+                return;
+            }
+
             timeline.innerHTML = '';
             
             posts.forEach(post => {
+                const authorName = post.profiles?.username || "名無しユーザー";
+                const authorAvatar = post.profiles?.avatar_url || "https://api.dicebear.com/7.x/adventurer/svg?seed=" + authorName;
+                
                 const postCard = document.createElement('div');
                 postCard.className = "bg-white border border-gray-200 rounded-xl overflow-hidden shadow-sm";
-                
-                // コメント一覧の生成
-                const commentsHTML = post.comments.map(c => `
-                    <div class="text-sm text-gray-700 bg-gray-50 p-2 rounded mb-1">
-                        <span class="font-bold">${c.author}:</span> ${c.text}
-                    </div>
-                `).join('');
-
                 postCard.innerHTML = `
                     <div class="flex items-center p-3">
-                        <img src="${post.avatar}" class="w-10 h-10 rounded-full border mr-3" alt="avatar">
-                        <span class="font-bold text-gray-800">${post.author}</span>
+                        <img src="${authorAvatar}" class="w-10 h-10 rounded-full border mr-3" alt="avatar">
+                        <span class="font-bold text-gray-800">${authorName}</span>
                     </div>
-
-                    <div class="px-3 pb-3 text-gray-800 text-sm">
-                        ${post.content}
-                    </div>
-
-                    ${post.media ? `
+                    <div class="px-3 pb-3 text-gray-800 text-sm">${post.content}</div>
+                    ${post.media_url ? `
                         <div class="w-full bg-black flex justify-center">
-                            <img src="${post.media}" class="max-h-96 w-full object-cover" alt="post media">
+                            <img src="${post.media_url}" class="max-h-96 w-full object-cover" alt="post media">
                         </div>
                     ` : ''}
-
-                    <div class="flex items-center justify-around border-t border-b border-gray-100 py-2 my-2 text-gray-600">
-                        <button onclick="toggleLike(${post.id})" class="flex items-center space-x-1 ${post.hasLiked ? 'text-red-500 font-bold' : 'hover:text-red-500'} transition">
-                            <i class="${post.hasLiked ? 'fa-solid' : 'fa-regular'} fa-heart"></i>
-                            <span>${post.likes}</span>
-                        </button>
-                        <div class="flex items-center space-x-1">
-                            <i class="fa-regular fa-comment"></i>
-                            <span>${post.comments.length}</span>
-                        </div>
-                    </div>
-
-                    <div class="p-3">
-                        <div class="space-y-1 mb-3 max-h-32 overflow-y-auto">
-                            ${commentsHTML}
-                        </div>
-                        <div class="flex gap-2">
-                            <input id="comment-input-${post.id}" type="text" placeholder="コメントを追加..." class="flex-1 border border-gray-200 rounded-full px-4 py-1 text-sm focus:outline-none focus:border-green-400">
-                            <button onclick="addComment(${post.id})" class="bg-green-100 text-green-600 px-3 py-1 rounded-full text-xs font-bold hover:bg-green-200">送信</button>
-                        </div>
-                    </div>
                 `;
                 timeline.appendChild(postCard);
             });
         }
 
-        // いいね機能
-        function toggleLike(postId) {
-            const post = posts.find(p => p.id === postId);
-            if (post) {
-                if (post.hasLiked) {
-                    post.likes--;
-                    post.hasLiked = false;
-                } else {
-                    post.likes++;
-                    post.hasLiked = true;
+        // アカウント作成・ログイン処理
+        async function handleAuthSubmit() {
+            const email = document.getElementById('authEmail').value.trim();
+            const password = document.getElementById('authPassword').value.trim();
+
+            if (isSignUpMode) {
+                // アカウント新規作成
+                const username = document.getElementById('profileName').value.trim();
+                const bio = document.getElementById('profileBio').value.trim();
+                const avatar = document.getElementById('profileAvatar').value.trim();
+
+                if (!email || !password || !username) {
+                    alert('必須項目を入力してください！');
+                    return;
                 }
-                renderTimeline();
+
+                // 1. サインアップ
+                const { data: authData, error: authError } = await exClient.auth.signUp({ email, password });
+                if (authError) {
+                    alert('登録エラー: ' + authError.message);
+                    return;
+                }
+
+                if (authData.user) {
+                    // 2. 作成したユーザーIDでプロフィールを「例の場所」に保存
+                    const { error: profileError } = await exClient
+                        .from('profiles')
+                        .insert([{
+                            id: authData.user.id,
+                            username: username,
+                            bio: bio,
+                            avatar_url: avatar || null
+                        }]);
+
+                    if (profileError) {
+                        alert('プロフィール作成エラー: ' + profileError.message);
+                    } else {
+                        alert('アカウントを作成しました！リロードしてログインしてください。');
+                        location.reload();
+                    }
+                }
+            } else {
+                // 既存アカウントでログイン
+                const { error } = await exClient.auth.signInWithPassword({ email, password });
+                if (error) {
+                    alert('ログインエラー: ' + error.message);
+                } else {
+                    location.reload();
+                }
             }
         }
 
-        // コメント投稿機能
-        function addComment(postId) {
-            const input = document.getElementById(`comment-input-${postId}`);
-            const text = input.value.trim();
-            if (text === '') return;
-
-            const post = posts.find(p => p.id === postId);
-            if (post) {
-                post.comments.push({
-                    author: "あなた",
-                    text: text
-                });
-                input.value = '';
-                renderTimeline();
-            }
-        }
-
-        // モーダルの開閉
-        function openPostModal() {
-            document.getElementById('postModal').classList.remove('hidden');
-        }
-        function closePostModal() {
-            document.getElementById('postModal').classList.add('hidden');
-            document.getElementById('postText').value = '';
-            document.getElementById('postMedia').value = '';
-        }
-
-        // 新規投稿処理
-        function submitPost() {
+        // 投稿を保存する処理
+        async function submitPost() {
+            if (!currentUser) return;
             const text = document.getElementById('postText').value.trim();
             const media = document.getElementById('postMedia').value.trim();
 
-            if (text === '' && media === '') {
-                alert('文字か画像のどちらかを入力してください！');
-                return;
+            if (!text && !media) return;
+
+            // 「例の場所」に新規レコードを挿入
+            const { error } = await exClient
+                .from('posts')
+                .insert([{
+                    id: Math.floor(Math.random() * 10000000), // 簡易的なランダムID
+                    user_id: currentUser.id,
+                    content: text,
+                    media_url: media || null
+                }]);
+
+            if (error) {
+                alert('投稿に失敗しました: ' + error.message);
+            } else {
+                closePostModal();
+                fetchAndRenderPosts();
             }
-
-            const newPost = {
-                id: posts.length + 1,
-                author: "あなた",
-                avatar: "https://api.dicebear.com/7.x/adventurer/svg?seed=You",
-                content: text,
-                media: media || null,
-                likes: 0,
-                hasLiked: false,
-                comments: []
-            };
-
-            posts.unshift(newPost); // タイムラインの先頭に追加
-            closePostModal();
-            renderTimeline();
         }
 
-        // 起動時に初期描画
-        renderTimeline();
-        // Supabaseとの接続設定（プロジェクト設定画面から取得できるURLとキーを入力します）
-const SUPABASE_URL = "あなたのSupabaseのURL";
-const SUPABASE_ANON_KEY = "あなたのSupabaseのAnon Key";
-const supabase = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-// 例：投稿をデータベースに保存するJSコード
-async function submitPost() {
-    const text = document.getElementById('postText').value;
-    
-    // データベースに挿入
-    const { data, error } = await supabase
-        .from('posts')
-        .insert([{ content: text, user_id: currentUserId }]);
-        
-    if (!error) {
-        // 成功したらタイムラインを再読み込みして表示
-        fetchAndRenderPosts();
-    }
-}
+        // --- モーダルと切り替えの制御用 ---
+        function openAuthModal() { document.getElementById('authModal').classList.remove('hidden'); }
+        function closeAuthModal() { document.getElementById('authModal').classList.add('hidden'); }
+        function openPostModal() { document.getElementById('postModal').classList.remove('hidden'); }
+        function closePostModal() { document.getElementById('postModal').classList.add('hidden'); }
+
+        function toggleAuthMode() {
+            isSignUpMode = !isSignUpMode;
+            const title = document.getElementById('authTitle');
+            const submitBtn = document.getElementById('authSubmitBtn');
+            const toggleBtn = document.getElementById('authToggleBtn');
+            const profileFields = document.getElementById('profileFields');
+
+            if (isSignUpMode) {
+                title.innerText = '簡易アカウント作成';
+                submitBtn.innerText = 'アカウントを作成する';
+                toggleBtn.innerText = 'すでにアカウントをお持ちの方（ログイン）';
+                profileFields.classList.remove('hidden');
+            } else {
+                title.innerText = 'ログイン';
+                submitBtn.innerText = 'ログインする';
+                toggleBtn.innerText = '新規アカウント作成はこちら';
+                profileFields.classList.add('hidden');
+            }
+        }
     </script>
 </body>
 </html>
