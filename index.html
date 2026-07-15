@@ -77,7 +77,7 @@
             
             <div class="space-y-4">
                 <div>
-                    <label class="block text-xs font-bold text-gray-700 mb-1">アイコン画像</label>
+                    <label class="block text-xs font-bold text-gray-700 mb-1">アイコン画像（自動で超軽量化されます）</label>
                     <input id="avatarFile" type="file" accept="image/*" class="w-full text-xs text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-xs file:font-semibold file:bg-green-50 file:text-green-700 hover:file:bg-green-100">
                 </div>
 
@@ -99,7 +99,7 @@
             </div>
             <textarea id="postText" class="w-full border border-gray-300 rounded p-2 h-24 resize-none mb-4" placeholder="今なにしてる？"></textarea>
             
-            <label class="block text-xs font-bold text-gray-700 mb-1">画像を追加</label>
+            <label class="block text-xs font-bold text-gray-700 mb-1">画像を追加（自動で超軽量化されます）</label>
             <input id="postMediaFile" type="file" accept="image/*" class="w-full text-xs text-gray-500 mb-4 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-xs file:font-semibold file:bg-green-50 file:text-green-700 hover:file:bg-green-100">
             
             <button onclick="submitPost()" class="w-full bg-green-500 text-white py-2 rounded font-bold hover:bg-green-600">投稿する</button>
@@ -108,7 +108,7 @@
 
     <script>
         // ==========================================
-        // 【最重要】例のキーをここに貼り付けてください！
+        // 【最重要】例のキーをここに貼り付け済み！
         // ==========================================
         const EX_URL = "https://kdydbrscxrekivqmplyn.supabase.co";
         const EX_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImtkeWRicnNjeHJla2l2cW1wbHluIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODQxMDk0NjEsImV4cCI6MjA5OTY4NTQ2MX0._sqoMMFn5Zf1m4VarmbkjXpn0H3Tma5qmymI57JkOLA";
@@ -122,6 +122,40 @@
             await checkUser();
             await fetchAndRenderPosts();
         };
+
+        // 💡 画像を超軽量URL化（100KB前後までリサイズ圧縮）する内蔵ツール
+        async function compressImage(file, maxWidth = 800, quality = 0.6) {
+            return new Promise((resolve) => {
+                const reader = new FileReader();
+                reader.readAsDataURL(file);
+                reader.onload = (event) => {
+                    const img = new Image();
+                    img.src = event.target.result;
+                    img.onload = () => {
+                        const canvas = document.createElement('canvas');
+                        let width = img.width;
+                        let height = img.height;
+
+                        // 横幅をmaxWidth基準に比率維持で縮小
+                        if (width > maxWidth) {
+                            height = Math.round((height * maxWidth) / width);
+                            width = maxWidth;
+                        }
+
+                        canvas.width = width;
+                        canvas.height = height;
+
+                        const ctx = canvas.getContext('2d');
+                        ctx.drawImage(img, 0, 0, width, height);
+
+                        // JPEG形式に圧縮してBlobに変換
+                        canvas.toBlob((blob) => {
+                            resolve(blob);
+                        }, 'image/jpeg', quality);
+                    };
+                };
+            });
+        }
 
         // ログイン状態の確認
         async function checkUser() {
@@ -197,7 +231,7 @@
             });
         }
 
-        // アカウント作成・ログイン処理（メアド不要、二重パスワード確認対応）
+        // アカウント作成・ログイン処理
         async function handleAuthSubmit() {
             const username = document.getElementById('authUsername').value.trim();
             const password = document.getElementById('authPassword').value.trim();
@@ -207,7 +241,6 @@
                 return;
             }
 
-            // メアド不要にするため、内部的にダミーのメアド形式にして「例の場所」へ送る
             const dummyEmail = `${username}@sij-community.local`;
 
             if (isSignUpMode) {
@@ -251,23 +284,23 @@
             }
         }
 
-        // プロフィール情報（アイコン、自己紹介）を「例の場所」に同期保存
+        // プロフィール保存（圧縮内蔵）
         async function saveProfile() {
             if (!currentUser) return;
 
             const bioText = document.getElementById('editBio').value.trim();
-            const avatarFile = document.getElementById('avatarFile').files[0];
+            const avatarFileInput = document.getElementById('avatarFile');
+            const avatarFile = avatarFileInput.files[0];
             let avatarUrl = document.getElementById('myAvatar').src;
 
-            // ファイルが選択されている場合は「例の場所」へアップロード
             if (avatarFile) {
-                const fileExt = avatarFile.name.split('.').pop();
-                const fileName = `${currentUser.id}_${Date.now()}.${fileExt}`;
-                const filePath = `${fileName}`;
+                // 💡 画像の自動軽量化を実行
+                const compressedBlob = await compressImage(avatarFile);
+                const fileName = `${currentUser.id}_${Date.now()}.jpg`; // 圧縮後はすべてjpgに
 
                 const { error: uploadError } = await exClient.storage
                     .from('avatars')
-                    .upload(filePath, avatarFile, { upsert: true });
+                    .upload(fileName, compressedBlob, { contentType: 'image/jpeg', upsert: true });
 
                 if (uploadError) {
                     alert('画像の保存に失敗しました: ' + uploadError.message);
@@ -276,12 +309,11 @@
 
                 const { data: { publicUrl } } = exClient.storage
                     .from('avatars')
-                    .getPublicUrl(filePath);
+                    .getPublicUrl(fileName);
 
                 avatarUrl = publicUrl;
             }
 
-            // プロフィールDBを更新
             const { error: updateError } = await exClient
                 .from('profiles')
                 .update({
@@ -299,23 +331,24 @@
             }
         }
 
-        // 投稿を「例の場所」に同期保存
+        // 投稿を送信（圧縮内蔵）
         async function submitPost() {
             if (!currentUser) return;
             const text = document.getElementById('postText').value.trim();
-            const mediaFile = document.getElementById('postMediaFile').files[0];
+            const mediaFileInput = document.getElementById('postMediaFile');
+            const mediaFile = mediaFileInput.files[0];
             let mediaUrl = null;
 
             if (!text && !mediaFile) return;
 
             if (mediaFile) {
-                const fileExt = mediaFile.name.split('.').pop();
-                const fileName = `${currentUser.id}_${Date.now()}.${fileExt}`;
-                const filePath = `${fileName}`;
+                // 💡 画像の自動軽量化を実行
+                const compressedBlob = await compressImage(mediaFile);
+                const fileName = `${currentUser.id}_${Date.now()}.jpg`; // 圧縮後はすべてjpgに
 
                 const { error: uploadError } = await exClient.storage
                     .from('posts')
-                    .upload(filePath, mediaFile);
+                    .upload(fileName, compressedBlob, { contentType: 'image/jpeg' });
 
                 if (uploadError) {
                     alert('画像の保存に失敗しました: ' + uploadError.message);
@@ -324,7 +357,7 @@
 
                 const { data: { publicUrl } } = exClient.storage
                     .from('posts')
-                    .getPublicUrl(filePath);
+                    .getPublicUrl(fileName);
 
                 mediaUrl = publicUrl;
             }
@@ -342,6 +375,9 @@
                 alert('投稿に失敗しました: ' + error.message);
             } else {
                 closePostModal();
+                // フォームをリセット
+                document.getElementById('postText').value = '';
+                mediaFileInput.value = '';
                 await fetchAndRenderPosts();
             }
         }
