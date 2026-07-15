@@ -15,6 +15,7 @@
             100% { background-color: #ffffff; }
         }
         .highlight-post { animation: highlight 2.5s ease-out forwards; }
+        /* 動画のレスポンシブアスペクト比維持用 */
         .video-container { position: relative; padding-bottom: 56.25%; height: 0; overflow: hidden; max-width: 100%; }
         .video-container iframe { position: absolute; top: 0; left: 0; width: 100%; height: 100%; }
     </style>
@@ -65,12 +66,17 @@
         </header>
 
         <div id="profileBar" class="hidden bg-gray-50 p-3 border-b border-gray-100 text-xs text-gray-600 flex justify-between items-center">
-            <div><span class="font-bold">自己紹介:</span> <span id="myBio">未設定</span></div>
+            <div>
+                <span class="font-bold">自己紹介:</span> <span id="myBio">未設定</span>
+            </div>
             <button onclick="openProfileModal()" class="text-green-600 hover:underline">編集</button>
         </div>
 
         <div id="announceArea" class="hidden bg-green-50 border-b border-green-200 p-4 space-y-2 text-sm text-green-800">
-            <div class="flex items-center space-x-2 font-bold text-green-700"><i class="fa-solid fa-bullhorn animate-bounce"></i><span>公式からのお知らせ</span></div>
+            <div class="flex items-center space-x-2 font-bold text-green-700">
+                <i class="fa-solid fa-bullhorn animate-bounce"></i>
+                <span>公式からのお知らせ</span>
+            </div>
             <p id="announceText" class="whitespace-pre-wrap leading-relaxed font-semibold">現在お知らせはありません。</p>
         </div>
 
@@ -79,11 +85,27 @@
         </main>
 
         <nav class="fixed bottom-0 left-0 right-0 max-w-[500px] mx-auto bg-white border-t border-gray-200 flex justify-around py-3 z-10 shadow-lg">
-            <button id="tabLatest" onclick="switchTab('latest')" class="flex flex-col items-center text-green-600 font-bold text-xs w-1/5"><i class="fa-solid fa-globe text-lg mb-0.5"></i><span>最新</span></button>
-            <button id="tabRecommend" onclick="switchTab('recommend')" class="flex flex-col items-center text-gray-400 font-bold text-xs w-1/5"><i class="fa-solid fa-fire text-lg mb-0.5"></i><span>おすすめ</span></button>
-            <button id="tabFollow" onclick="switchTab('follow')" class="flex flex-col items-center text-gray-400 font-bold text-xs w-1/5"><i class="fa-solid fa-user-group text-lg mb-0.5"></i><span>フォロー</span></button>
-            <button id="tabNotification" onclick="switchTab('notification')" class="flex flex-col items-center text-gray-400 font-bold text-xs w-1/5 relative"><i class="fa-solid fa-bell text-lg mb-0.5"></i><span>通知</span><span id="navNotifyBadge" class="hidden absolute top-2 right-4 bg-red-500 text-white rounded-full text-[10px] w-4 h-4 flex items-center justify-center font-bold">0</span></button>
-            <button id="tabMyPage" onclick="switchTab('mypage')" class="flex flex-col items-center text-gray-400 font-bold text-xs w-1/5"><i class="fa-solid fa-user text-lg mb-0.5"></i><span>マイページ</span></button>
+            <button id="tabLatest" onclick="switchTab('latest')" class="flex flex-col items-center text-green-600 font-bold text-xs w-1/5">
+                <i class="fa-solid fa-globe text-lg mb-0.5"></i>
+                <span>最新</span>
+            </button>
+            <button id="tabRecommend" onclick="switchTab('recommend')" class="flex flex-col items-center text-gray-400 font-bold text-xs w-1/5">
+                <i class="fa-solid fa-fire text-lg mb-0.5"></i>
+                <span>おすすめ</span>
+            </button>
+            <button id="tabFollow" onclick="switchTab('follow')" class="flex flex-col items-center text-gray-400 font-bold text-xs w-1/5">
+                <i class="fa-solid fa-user-group text-lg mb-0.5"></i>
+                <span>フォロー</span>
+            </button>
+            <button id="tabNotification" onclick="switchTab('notification')" class="flex flex-col items-center text-gray-400 font-bold text-xs w-1/5 relative">
+                <i class="fa-solid fa-bell text-lg mb-0.5"></i>
+                <span>通知</span>
+                <span id="navNotifyBadge" class="hidden absolute top-2 right-4 bg-red-500 text-white rounded-full text-[10px] w-4 h-4 flex items-center justify-center font-bold">0</span>
+            </button>
+            <button id="tabMyPage" onclick="switchTab('mypage')" class="flex flex-col items-center text-gray-400 font-bold text-xs w-1/5">
+                <i class="fa-solid fa-user text-lg mb-0.5"></i>
+                <span>マイページ</span>
+            </button>
         </nav>
 
     </div>
@@ -93,19 +115,9 @@
     <div id="userViewModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center hidden z-50 p-4"><div class="bg-white rounded-lg w-full max-w-sm p-6 text-center"><div class="flex justify-end"><button onclick="closeUserViewModal(true)" class="text-gray-500 hover:text-gray-800 text-xl">&times;</button></div><img id="viewAvatar" class="w-24 h-24 rounded-full border mx-auto mb-4 object-cover" src=""><h3 id="viewName" class="text-xl font-bold text-gray-800 mb-2"></h3><p id="viewBio" class="text-sm text-gray-600 bg-gray-50 p-3 rounded-lg min-h-[50px] flex items-center justify-center whitespace-pre-wrap mb-4"></p><div id="followBtnArea"></div></div></div>
     <div id="authModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center hidden z-50 p-4"><div class="bg-white rounded-lg w-full max-w-md p-6"><div class="flex justify-between items-center mb-4"><h3 id="authTitle" class="text-lg font-bold">簡易アカウント作成</h3><button onclick="closeAuthModal()" class="text-gray-500 hover:text-gray-800 text-xl">&times;</button></div><div class="space-y-3"><input id="authUsername" type="text" class="w-full border p-2 rounded text-sm" placeholder="ユーザー名"><input id="authPassword" type="password" class="w-full border p-2 rounded text-sm" placeholder="パスワード（6文字以上）"><input id="authPasswordConfirm" type="password" class="w-full border p-2 rounded text-sm" placeholder="パスワード確認（もう一度入力）"><div class="flex flex-col gap-2 pt-2"><button id="authSubmitBtn" onclick="handleAuthSubmit()" class="w-full bg-green-500 text-white py-2 rounded font-bold hover:bg-green-600 text-sm">アカウントを作成する</button><button id="authToggleBtn" onclick="toggleAuthMode()" class="text-xs text-gray-500 underline hover:text-gray-700">すでにアカウントをお持ちの方（ログイン）</button></div></div></div></div>
     <div id="profileModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center hidden z-50 p-4"><div class="bg-white rounded-lg w-full max-w-md p-6"><div class="flex justify-between items-center mb-4"><h3 class="text-lg font-bold">プロフィール編集</h3><button onclick="closeProfileModal()" class="text-gray-500 hover:text-gray-800 text-xl">&times;</button></div><div class="space-y-4"><div><label class="block text-xs font-bold text-gray-700 mb-1">アイコン画像</label><input id="avatarFile" type="file" accept="image/*" class="w-full text-xs text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-xs file:font-semibold file:bg-green-50 file:text-green-700 hover:file:bg-green-100"></div><div><label class="block text-xs font-bold text-gray-700 mb-1">一言（自己紹介）</label><input id="editBio" type="text" class="w-full border p-2 rounded text-sm" placeholder="今の一言を入力してください"></div><button onclick="saveProfile()" class="w-full bg-green-500 text-white py-2 rounded font-bold hover:bg-green-600 text-sm">保存する</button></div></div></div>
-    <div id="postModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center hidden z-50 p-4"><div class="bg-white rounded-lg w-full max-w-md p-6"><div class="flex justify-between items-center mb-4"><h3 class="text-lg font-bold">新規投稿</h3><button onclick="closePostModal()" class="text-gray-500 hover:text-gray-800 text-xl">&times;</button></div><textarea id="postText" class="w-full border border-gray-300 rounded p-2 h-24 resize-none mb-4" placeholder="今なにしてる？ 画像や短い動画(15MBまで)も載せられるよ！"></textarea><label class="block text-xs font-bold text-gray-700 mb-1">画像または動画を追加（任意）</label><input id="postMediaFile" type="file" accept="image/*,video/*" class="w-full text-xs text-gray-500 mb-4 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-xs file:font-semibold file:bg-green-50 file:text-green-700 hover:file:bg-green-100"><button id="realPostSubmitBtn" onclick="submitPost()" class="w-full bg-green-500 text-white py-2 rounded font-bold hover:bg-green-600">投稿する</button></div></div>
+    <div id="postModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center hidden z-50 p-4"><div class="bg-white rounded-lg w-full max-w-md p-6"><div class="flex justify-between items-center mb-4"><h3 class="text-lg font-bold">新規投稿</h3><button onclick="closePostModal()" class="text-gray-500 hover:text-gray-800 text-xl">&times;</button></div><textarea id="postText" class="w-full border border-gray-300 rounded p-2 h-24 resize-none mb-4" placeholder="今なにしてる？ YouTubeのURLを貼ると動画が埋め込まれるよ！"></textarea><label class="block text-xs font-bold text-gray-700 mb-1">画像を追加（任意）</label><input id="postMediaFile" type="file" accept="image/*" class="w-full text-xs text-gray-500 mb-4 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-xs file:font-semibold file:bg-green-50 file:text-green-700 hover:file:bg-green-100"><button onclick="submitPost()" class="w-full bg-green-500 text-white py-2 rounded font-bold hover:bg-green-600">投稿する</button></div></div>
     <div id="announceModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center hidden z-50 p-4"><div class="bg-white rounded-lg w-full max-w-md p-6"><div class="flex justify-between items-center mb-4"><h3 class="text-lg font-bold text-red-600">公式お知らせを投稿</h3><button onclick="closeAnnounceModal()" class="text-gray-500 hover:text-gray-800 text-xl">&times;</button></div><textarea id="announceInputText" class="w-full border border-gray-300 rounded p-2 h-32 resize-none mb-4" placeholder="ユーザー全員に見せる重要なお知らせを入力..."></textarea><button onclick="submitAnnouncement()" class="w-full bg-red-500 text-white py-2 rounded font-bold hover:bg-red-600">お知らせを更新する</button></div></div>
-<div class="p-3 border-t border-gray-100 flex items-center space-x-6">
-                        <button onclick="toggleLike(${post.id}, ${isLiked})" class="flex items-center space-x-1 ${isLiked ? 'text-red-500' : 'text-gray-400'} hover:scale-105 transition"><i class="${isLiked ? 'fa-solid' : 'fa-regular'} fa-heart text-lg"></i><span class="text-xs font-bold">${likeCount || 0}</span></button>
-                        <button onclick="openCommentModal(${post.id})" class="flex items-center space-x-1 text-gray-400 hover:text-green-500 transition"><i class="fa-regular fa-comment text-lg"></i><span class="text-xs font-bold">${commentCount || 0}</span></button>
-                        <button onclick="copyPostLink(${post.id})" class="flex items-center space-x-1 text-gray-400 hover:text-blue-500 transition" title="リンクをコピー"><i class="fa-regular fa-share-from-square text-lg"></i><span class="text-xs font-bold">シェア</span></button>
-                    </div>
-    <div id="newPostAlert" class="hidden text-center my-3 transition-all duration-300">
-    <button onclick="loadNewPosts()" class="bg-green-500 hover:bg-green-600 text-white text-xs font-bold px-4 py-2 rounded-full shadow-md animate-bounce">
-        <i class="fa-solid fa-arrow-up mr-1"></i> 新しい投稿
-    </button>
-</div>
-    
+
     <script>
         const EX_URL = "https://kdydbrscxrekivqmplyn.supabase.co";
         const EX_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImtkeWRicnNjeHJla2l2cW1wbHluIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODQxMDk0NjEsImV4cCI6MjA5OTY4NTQ2MX0._sqoMMFn5Zf1m4VarmbkjXpn0H3Tma5qmymI57JkOLA";
@@ -120,23 +132,15 @@
         
         let activePostIdForComment = null;
         let activeParentCommentId = null;
-        
-        // 🆕 最新の投稿IDを保存する変数と、タイマーのIDを保存する変数
-        let latestPostId = null;
-        let checkNewPostInterval = null;
 
         window.onload = async () => {
             await checkUser();
-            await fetchAnnouncement(); 
+            await fetchAnnouncement();
             await handleUrlRouting();
             if (currentUser) {
                 await checkUnreadNotifications();
                 setInterval(checkUnreadNotifications, 3000);
             }
-            
-            // 🆕 初回読み込み時に最新の投稿IDを記憶し、5秒ごとに新着チェックを開始
-            await initLatestPostId();
-            checkNewPostInterval = setInterval(checkNewPosts, 5000); 
         };
 
         window.onpopstate = async () => { await handleUrlRouting(); };
@@ -161,30 +165,28 @@
             }
         }
 
+        // 🎥 YouTubeのURLから動画IDを抽出して埋め込みHTMLを作る関数
         function getYouTubeEmbedHtml(text) {
             if (!text) return "";
+            // 通常URL (watch?v=) と 短縮URL (youtu.be/) の両方に対応する正規表現
             const regExp = /^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|\&v=)([^#\&\?]*).*/;
             const matches = text.match(/(https?:\/\/[^\s]+)/g);
+            
             if (!matches) return "";
+            
             let embedHtml = "";
             matches.forEach(url => {
                 const match = url.match(regExp);
                 if (match && match[2].length === 11) {
                     const videoId = match[2];
-                    embedHtml += `<div class="video-container bg-black"><iframe src="https://www.youtube.com/embed/${videoId}" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowfullscreen></iframe></div>`;
+                    embedHtml += `
+                        <div class="video-container bg-black">
+                            <iframe src="https://www.youtube.com/embed/${videoId}" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowfullscreen></iframe>
+                        </div>
+                    `;
                 }
             });
             return embedHtml;
-        }
-
-        function renderMediaAttachment(url) {
-            if (!url) return "";
-            const isVideo = url.toLowerCase().match(/\.(mp4|mov|webm|ogv|3gp|m4v)/) || url.includes('video');
-            if (isVideo) {
-                return `<div class="w-full bg-black flex justify-center"><video src="${url}" controls playsinline class="max-h-96 w-full object-contain"></video></div>`;
-            } else {
-                return `<div class="w-full bg-black flex justify-center"><img src="${url}" class="max-h-96 w-full object-cover"></div>`;
-            }
         }
 
         async function compressImage(file, maxWidth = 800, quality = 0.6) {
@@ -234,36 +236,16 @@
 
         async function fetchAnnouncement() {
             const { data, error } = await exClient.from('announcements').select('content').order('created_at', { ascending: false }).limit(1);
-            const announceArea = document.getElementById('announceArea');
-            const announceText = document.getElementById('announceText');
-            
-            if (!error && data && data.length > 0 && data[0].content) {
-                announceText.innerText = data[0].content;
-                announceArea.classList.remove('hidden');
-            } else {
-                announceArea.classList.add('hidden');
-            }
+            if (!error && data && data.length > 0) document.getElementById('announceText').innerText = data[0].content;
         }
 
         async function submitAnnouncement() {
-            const text = document.getElementById('announceInputText').value.trim(); 
-            if (!text) return;
+            const text = document.getElementById('announceInputText').value.trim(); if (!text) return;
             const { error } = await exClient.from('announcements').insert([{ content: text }]);
-            if (!error) { 
-                alert('お知らせを更新しました！'); 
-                document.getElementById('announceInputText').value = ''; 
-                closeAnnounceModal(); 
-                await fetchAnnouncement(); 
-            }
+            if (!error) { alert('お知らせを更新しました！'); closeAnnounceModal(); await fetchAnnouncement(); }
         }
 
         async function switchTab(tabName, updateHash = true) {
-            // 🆕 タブ切り替え時に新着通知ボタンを隠して基準IDをリセット
-            if (document.getElementById('newPostAlert')) {
-                document.getElementById('newPostAlert').classList.add('hidden');
-            }
-            if (typeof initLatestPostId === 'function') initLatestPostId();
-
             if ((tabName === 'follow' || tabName === 'notification' || tabName === 'mypage') && !currentUser) { 
                 alert('ログインが必要です'); switchTab('latest', true); return; 
             }
@@ -284,18 +266,8 @@
             await fetchAndRenderPosts();
         }
 
-async function clearSearch() { 
-            // 🆕 検索クリア時に新着通知ボタンを隠して基準IDをリセット
-            if (document.getElementById('newPostAlert')) {
-                document.getElementById('newPostAlert').classList.add('hidden');
-            }
-            if (typeof initLatestPostId === 'function') initLatestPostId();
-
-            currentSearchWord = ""; 
-            document.getElementById('searchInput').value = ""; 
-            document.getElementById('searchBadge').classList.add('hidden'); 
-            await fetchAndRenderPosts(); 
-        }
+        async function clearSearch() { currentSearchWord = ""; document.getElementById('searchInput').value = ""; document.getElementById('searchBadge').classList.add('hidden'); await fetchAndRenderPosts(); }
+        function clearSearchAndRoute() { window.history.pushState(null, null, ' '); clearSearch(); }
 
         function parseRichText(text) {
             if (!text) return "";
@@ -305,6 +277,7 @@ async function clearSearch() {
             formatted = formatted.replace(/@([A-Za-z0-9_ぁ-んァ-ヶー一-龠々]+)/g, (match, username) => {
                 return `<span class="text-blue-600 font-bold cursor-pointer hover:underline" onclick="clickMention('${username}')">${match}</span>`;
             });
+            // URLをハイパーリンク化
             formatted = formatted.replace(/(https?:\/\/[^\s]+)/g, '<a href="$1" target="_blank" class="text-green-600 hover:underline break-all">$1</a>');
             return formatted;
         }
@@ -356,6 +329,7 @@ async function clearSearch() {
                 const { count: commentCount } = await exClient.from('comments').select('*', { count: 'exact', head: true }).eq('post_id', post.id);
                 let isLiked = false; const { data: myLike } = await exClient.from('likes').select('id').eq('post_id', post.id).eq('user_id', currentUser.id).maybeSingle(); if (myLike) isLiked = true;
 
+                // 動画埋め込みHTMLを抽出
                 const videoEmbedHtml = getYouTubeEmbedHtml(post.content);
 
                 const postCard = document.createElement('div');
@@ -368,7 +342,7 @@ async function clearSearch() {
                     </div>
                     <div class="px-3 pb-3 text-gray-800 text-sm whitespace-pre-wrap">${parseRichText(post.content)}</div>
                     ${videoEmbedHtml}
-                    ${renderMediaAttachment(post.media_url)}
+                    ${post.media_url ? `<div class="w-full bg-black flex justify-center"><img src="${post.media_url}" class="max-h-96 w-full object-cover"></div>` : ''}
                     <div class="p-3 border-t border-gray-100 flex items-center space-x-6">
                         <button onclick="toggleLike(${post.id}, ${isLiked})" class="flex items-center space-x-1 ${isLiked ? 'text-red-500' : 'text-gray-400'} hover:scale-105 transition"><i class="${isLiked ? 'fa-solid' : 'fa-regular'} fa-heart text-lg"></i><span class="text-xs font-bold">${likeCount || 0}</span></button>
                         <button onclick="openCommentModal(${post.id})" class="flex items-center space-x-1 text-gray-400 hover:text-green-500 transition"><i class="fa-regular fa-comment text-lg"></i><span class="text-xs font-bold">${commentCount || 0}</span></button>
@@ -380,8 +354,6 @@ async function clearSearch() {
 
         async function fetchAndRenderPosts() {
             const timeline = document.getElementById('timeline');
-            timeline.innerHTML = '<div class="text-center text-gray-500 py-10">タイムラインを読み込み中...</div>';
-
             let query = exClient.from('posts').select(`id, content, media_url, user_id, created_at, profiles ( username, avatar_url )`);
             if (currentSearchWord) query = query.ilike('content', `%#${currentSearchWord}%`);
             if (currentTab === 'follow' && currentUser) {
@@ -398,8 +370,7 @@ async function clearSearch() {
             for (const post of posts) {
                 const { count: likeCount } = await exClient.from('likes').select('*', { count: 'exact', head: true }).eq('post_id', post.id);
                 const { count: commentCount } = await exClient.from('comments').select('*', { count: 'exact', head: true }).eq('post_id', post.id);
-                let isLiked = false; if (currentUser) { const { data: myLike }
-                    = await exClient.from('likes').select('id').eq('post_id', post.id).eq('user_id', currentUser.id).maybeSingle(); if (myLike) isLiked = true; }
+                let isLiked = false; if (currentUser) { const { data: myLike } = await exClient.from('likes').select('id').eq('post_id', post.id).eq('user_id', currentUser.id).maybeSingle(); if (myLike) isLiked = true; }
                 extendedPosts.push({ ...post, likeCount: likeCount || 0, commentCount: commentCount || 0, isLiked });
             }
             if (currentTab === 'recommend') { extendedPosts.sort((a, b) => (b.likeCount !== a.likeCount) ? b.likeCount - a.likeCount : new Date(b.created_at) - new Date(a.created_at)); }
@@ -408,103 +379,211 @@ async function clearSearch() {
             extendedPosts.forEach(post => {
                 const authorName = post.profiles?.username || "名無しユーザー";
                 const authorAvatar = post.profiles?.avatar_url || "https://api.dicebear.com/7.x/adventurer/svg?seed=" + authorName;
+                const isMyPost = currentUser && currentUser.id === post.user_id;
+
+                // 動画埋め込みHTMLを抽出
                 const videoEmbedHtml = getYouTubeEmbedHtml(post.content);
-                
+
                 const postCard = document.createElement('div');
                 postCard.id = `post-card-${post.id}`;
                 postCard.className = "bg-white border border-gray-200 rounded-xl overflow-hidden shadow-sm mb-4 transition-all duration-500";
-                
-                let deleteBtn = "";
-                if (currentUser && currentUser.id === post.user_id) {
-                    deleteBtn = `<button onclick="deletePost(${post.id})" class="text-gray-400 hover:text-red-500 transition"><i class="fa-solid fa-trash-can"></i></button>`;
-                }
-
                 postCard.innerHTML = `
                     <div class="flex justify-between items-center p-3">
-                        <div class="flex items-center cursor-pointer" onclick="viewUserProfile('${post.user_id}')">
+                        <div class="flex items-center cursor-pointer hover:opacity-80 transition" onclick="viewUserProfile('${post.user_id}')">
                             <img src="${authorAvatar}" class="w-10 h-10 rounded-full border mr-3 object-cover">
                             <span class="font-bold text-gray-800 hover:underline">${authorName}</span>
                         </div>
-                        ${deleteBtn}
+                        ${isMyPost ? `<button onclick="deletePost(${post.id})" class="text-gray-400 hover:text-red-500"><i class="fa-solid fa-trash-can"></i></button>` : ''}
                     </div>
                     <div class="px-3 pb-3 text-gray-800 text-sm whitespace-pre-wrap">${parseRichText(post.content)}</div>
                     ${videoEmbedHtml}
-                    ${renderMediaAttachment(post.media_url)}
+                    ${post.media_url ? `<div class="w-full bg-black flex justify-center"><img src="${post.media_url}" class="max-h-96 w-full object-cover"></div>` : ''}
                     <div class="p-3 border-t border-gray-100 flex items-center space-x-6">
-                        <button onclick="toggleLike(${post.id}, ${post.isLiked})" class="flex items-center space-x-1 ${post.isLiked ? 'text-red-500' : 'text-gray-400'} hover:scale-105 transition">
-                            <i class="${post.isLiked ? 'fa-solid' : 'fa-regular'} fa-heart text-lg"></i>
-                            <span class="text-xs font-bold">${post.likeCount}</span>
-                        </button>
-                        <button onclick="openCommentModal(${post.id})" class="flex items-center space-x-1 text-gray-400 hover:text-green-500 transition">
-                            <i class="fa-regular fa-comment text-lg"></i>
-                            <span class="text-xs font-bold">${post.commentCount}</span>
-                        </button>
-                        <button onclick="copyPostLink(${post.id})" class="text-gray-400 hover:text-blue-500 transition"><i class="fa-regular fa-share-from-square text-lg"></i></button>
+                        <button onclick="toggleLike(${post.id}, ${post.isLiked})" class="flex items-center space-x-1 ${post.isLiked ? 'text-red-500' : 'text-gray-400'} hover:scale-105 transition"><i class="${post.isLiked ? 'fa-solid' : 'fa-regular'} fa-heart text-lg"></i><span class="text-xs font-bold">${post.likeCount}</span></button>
+                        <button onclick="openCommentModal(${post.id})" class="flex items-center space-x-1 text-gray-400 hover:text-green-500 transition"><i class="fa-regular fa-comment text-lg"></i><span class="text-xs font-bold">${post.commentCount}</span></button>
                     </div>
                 `;
                 timeline.appendChild(postCard);
             });
         }
 
-        // --- 共通モーダル開閉関数 ---
-        function openAnnounceModal() { document.getElementById('announceModal').classList.remove('hidden'); }
-        function closeAnnounceModal() { document.getElementById('announceModal').classList.add('hidden'); }
-        function openPostModal() { document.getElementById('postModal').classList.remove('hidden'); }
-        function closePostModal() { document.getElementById('postModal').classList.add('hidden'); }
-        function openAuthModal() { document.getElementById('authModal').classList.remove('hidden'); }
-        function closeAuthModal() { document.getElementById('authModal').classList.add('hidden'); }
-        function openProfileModal() { document.getElementById('profileModal').classList.remove('hidden'); }
-        function closeProfileModal() { document.getElementById('profileModal').classList.add('hidden'); }
-        function openUserSearchModal() { document.getElementById('userSearchModal').classList.remove('hidden'); }
-        function closeUserSearchModal() { document.getElementById('userSearchModal').classList.add('hidden'); }
-        
-        function copyPostLink(postId) {
-            const baseUrl = window.location.origin + window.location.pathname;
-            const shareUrl = `${baseUrl}#/post/${postId}`;
-            navigator.clipboard.writeText(shareUrl).then(() => {
-                alert('投稿の個別リンクをコピーしました！');
-            }).catch(err => {
-                console.error('コピー失敗: ', err);
-                alert('リンクのコピーに失敗しました。');
-            });
-        }
-        // 🆕 初回起動時に最新の投稿IDを取得する関数
-        async function initLatestPostId() {
-            const { data, error } = await exClient.from('posts').select('id').order('created_at', { ascending: false }).limit(1).maybeSingle();
-            if (!error && data) {
-                latestPostId = data.id;
-            }
-        }
-
-        // 🆕 定期的に新しい投稿があるか調べる関数（最新タブの時のみチェック）
-        async function checkNewPosts() {
-            // 最新タブ（latest）かつ 検索中でない場合のみチェックする
-            if (currentTab !== 'latest' || currentSearchWord) return;
-
-            const { data, error } = await exClient.from('posts').select('id').order('created_at', { ascending: false }).limit(1).maybeSingle();
-            
-            if (!error && data && latestPostId) {
-                // DBの最新IDが、保持しているIDより大きければ新しい投稿があると判断
-                if (data.id > latestPostId) {
-                    document.getElementById('newPostAlert').classList.remove('hidden');
+        async function submitPost() {
+            if (!currentUser) return; const text = document.getElementById('postText').value.trim(); const mediaFileInput = document.getElementById('postMediaFile'); const mediaFile = mediaFileInput.files[0]; let mediaUrl = null; if (!text && !mediaFile) return;
+            if (mediaFile) { const compressedBlob = await compressImage(mediaFile); const fileName = `${currentUser.id}_${Date.now()}.jpg`; await exClient.storage.from('posts').upload(fileName, compressedBlob, { contentType: 'image/jpeg' }); const { data: { publicUrl } } = exClient.storage.from('posts').getPublicUrl(fileName); mediaUrl = publicUrl; }
+            const { data: newPost, error } = await exClient.from('posts').insert([{ user_id: currentUser.id, content: text, media_url: mediaUrl }]).select().single();
+            if (!error && newPost) {
+                const { data: followers } = await exClient.from('follows').select('follower_id').eq('following_id', currentUser.id);
+                if (followers && followers.length > 0) { const notifyRecords = followers.map(f => ({ user_id: f.follower_id, type: 'follow_post', sender_name: myProfileName, source_id: newPost.id })); await exClient.from('notifications').insert(notifyRecords); }
+                const mentionMatches = text.match(/@([A-Za-z0-9_ぁ-んァ-ヶー一-龠々]+)/g);
+                if (mentionMatches) {
+                    for (const match of mentionMatches) {
+                        const targetName = match.replace('@', ''); if (targetName === myProfileName) continue;
+                        const { data: targetUser } = await exClient.from('public_profiles').select('id').eq('username', targetName).maybeSingle();
+                        if (targetUser) { await exClient.from('notifications').insert([{ user_id: targetUser.id, type: 'mention', sender_name: myProfileName, source_id: newPost.id }]); }
+                    }
                 }
             }
+            closePostModal(); document.getElementById('postText').value = ''; mediaFileInput.value = ''; 
+            if (currentTab === 'mypage') await renderMyPage(); else await fetchAndRenderPosts();
         }
 
-        // 🆕 「新しい投稿」ボタンが押された時の処理
-        async function loadNewPosts() {
-            // ボタンを隠す
-            document.getElementById('newPostAlert').classList.add('hidden');
-            
-            // 最新のIDを更新
-            await initLatestPostId();
-            
-            // タイムラインを再読み込み
-            await fetchAndRenderPosts();
-            
-            // 画面を最上部までスムーズにスクロール
-            window.scrollTo({ top: 0, behavior: 'smooth' });
+        async function renderNotificationsList() {
+            const timeline = document.getElementById('timeline'); timeline.innerHTML = '<div class="text-center text-gray-500 py-10">通知を読み込み中...</div>';
+            const { data: list, error } = await exClient.from('notifications').select('*').eq('user_id', currentUser.id).order('created_at', { ascending: false }).limit(40);
+            if (error) { timeline.innerHTML = '<div class="text-center text-red-500 py-10">通知の取得に失敗しました</div>'; return; }
+            if (!list || list.length === 0) { timeline.innerHTML = '<div class="text-center text-gray-400 py-10"><i class="fa-regular fa-bell-slash text-3xl mb-2 block"></i>通知はまだありません。</div>'; return; }
+            timeline.innerHTML = '<h2 class="text-md font-bold text-gray-700 px-1 mb-2"><i class="fa-solid fa-bell text-green-600 mr-1"></i> あなたへの通知</h2>';
+            list.forEach(n => {
+                const item = document.createElement('div'); item.className = `p-4 rounded-xl border transition cursor-pointer flex justify-between items-center ${n.is_read ? 'bg-white text-gray-600 border-gray-100' : 'bg-green-50/70 border-green-200 text-gray-900 font-semibold shadow-sm'}`;
+                item.onclick = () => clickNotificationItem(n.id, n.source_id);
+                let textStr = ""; let iconStr = "";
+                if (n.type === 'mention') { iconStr = '<i class="fa-solid fa-at text-blue-500 text-lg mr-3"></i>'; textStr = `💬 ${n.sender_name} さんがあなたをメンションしました！`; }
+                else if (n.type === 'follow_post') { iconStr = '<i class="fa-solid fa-user-plus text-green-500 text-lg mr-3"></i>'; textStr = `✨ フォロー中の ${n.sender_name} さんの新規投稿があります!!`; }
+                item.innerHTML = `<div class="flex items-center">${iconStr}<span class="text-sm">${textStr}</span></div><i class="fa-solid fa-chevron-right text-gray-300 text-xs"></i>`;
+                timeline.appendChild(item);
+            });
         }
-    </script>                                   
+
+        async function clickNotificationItem(notificationId, postId) {
+            await exClient.from('notifications').update({ is_read: true }).eq('id', notificationId); await checkUnreadNotifications();
+            currentTab = "latest";
+            const tabs = { latest: document.getElementById('tabLatest'), recommend: document.getElementById('tabRecommend'), follow: document.getElementById('tabFollow'), notification: document.getElementById('tabNotification'), mypage: document.getElementById('tabMyPage') };
+            Object.keys(tabs).forEach(k => { tabs[k].className = (k === "latest") ? "flex flex-col items-center text-green-600 font-bold text-xs w-1/5 relative" : "flex flex-col items-center text-gray-400 font-bold text-xs w-1/5 relative"; });
+            await fetchAndRenderPosts();
+            setTimeout(() => {
+                const targetCard = document.getElementById(`post-card-${postId}`);
+                if (targetCard) { targetCard.scrollIntoView({ behavior: 'smooth', block: 'center' }); targetCard.classList.add('highlight-post'); setTimeout(() => targetCard.classList.remove('highlight-post'), 3000); }
+                else { alert('該当の投稿は見つかりません。'); }
+            }, 300);
+        }
+
+        async function openCommentModal(postId, updateHistory = true) {
+            activePostIdForComment = postId; activeParentCommentId = null; 
+            document.getElementById('replyTargetBadge').classList.add('hidden');
+            document.getElementById('commentModal').classList.remove('hidden');
+            if (updateHistory) { window.history.pushState({type: 'post', id: postId}, null, `#/post/${postId}`); }
+            await renderComments();
+        }
+
+        function closeCommentModal(updateHistory = false) {
+            document.getElementById('commentModal').classList.add('hidden');
+            activePostIdForComment = null; activeParentCommentId = null;
+            if (updateHistory) {
+                if (currentTab === 'mypage') window.history.pushState(null, null, '#/mypage');
+                else window.history.pushState(null, null, ' ');
+            }
+        }
+
+        async function renderComments() {
+            const listArea = document.getElementById('commentListArea'); const formArea = document.getElementById('commentFormArea'); if (!activePostIdForComment) return;
+            const { data: comments } = await exClient.from('comments').select(`id, content, user_id, parent_id, created_at, profiles(username, avatar_url)`).eq('post_id', activePostIdForComment).order('created_at', { ascending: true });
+            if (!comments || comments.length === 0) { listArea.innerHTML = '<p class="text-gray-400 text-center py-4">コメントはまだありません。</p>'; }
+            else {
+                listArea.innerHTML = ''; const parentComments = comments.filter(c => !c.parent_id); const replies = comments.filter(c => c.parent_id);
+                for (const pc of parentComments) {
+                    const pcAvatar = pc.profiles?.avatar_url || "https://api.dicebear.com/7.x/adventurer/svg?seed=" + pc.profiles?.username;
+                    const { count: cLikeCount } = await exClient.from('comment_likes').select('*', { count: 'exact', head: true }).eq('comment_id', pc.id);
+                    let isCLiked = false; if (currentUser) { const { data: myCLike } = await exClient.from('comment_likes').select('id').eq('comment_id', pc.id).eq('user_id', currentUser.id).maybeSingle(); if (myCLike) isCLiked = true; }
+                    const commentDiv = document.createElement('div'); commentDiv.className = "border-b border-gray-100 pb-3";
+                    let html = `<div class="flex items-start justify-between"><div class="flex items-start space-x-2"><img src="${pcAvatar}" class="w-7 h-7 rounded-full object-cover mt-0.5 border"><div><div class="font-bold text-xs text-gray-700">${pc.profiles?.username}</div><div class="text-sm text-gray-800 mt-0.5">${parseRichText(pc.content)}</div><div class="flex items-center space-x-3 mt-1 text-[11px] text-gray-400"><button onclick="setReplyTarget(${pc.id}, '${pc.profiles?.username}')" class="hover:text-blue-500 font-bold">返信</button></div></div></div><button onclick="toggleCommentLike(${pc.id}, ${isCLiked})" class="text-xs flex items-center space-x-0.5 ${isCLiked ? 'text-red-500' : 'text-gray-400'}"><i class="${isCLiked ? 'fa-solid' : 'fa-regular'} fa-heart"></i><span>${cLikeCount || 0}</span></button></div>`;
+                    const thisReplies = replies.filter(r => r.parent_id === pc.id);
+                    if (thisReplies.length > 0) {
+                        html += `<div class="ml-8 mt-2 space-y-2 border-l-2 border-gray-100 pl-3 bg-gray-50/50 p-2 rounded-lg">`;
+                        for (const rc of thisReplies) {
+                            const rcAvatar = rc.profiles?.avatar_url || "https://api.dicebear.com/7.x/adventurer/svg?seed=" + rc.profiles?.username;
+                            const { count: rcLikeCount } = await exClient.from('comment_likes').select('*', { count: 'exact', head: true }).eq('comment_id', rc.id);
+                            let isRcLiked = false; if (currentUser) { const { data: myRcLike } = await exClient.from('comment_likes').select('id').eq('comment_id', rc.id).eq('user_id', currentUser.id).maybeSingle(); if (myRcLike) isRcLiked = true; }
+                            html += `<div class="flex items-start justify-between"><div class="flex items-start space-x-2"><img src="${rcAvatar}" class="w-5 h-5 rounded-full object-cover mt-0.5 border"><div><div class="font-bold text-[11px] text-gray-600">${rc.profiles?.username}</div><div class="text-xs text-gray-800 mt-0.5">${parseRichText(rc.content)}</div></div></div><button onclick="toggleCommentLike(${rc.id}, ${isRcLiked})" class="text-[10px] flex items-center space-x-0.5 ${isRcLiked ? 'text-red-500' : 'text-gray-400'}"><i class="${isRcLiked ? 'fa-solid' : 'fa-regular'} fa-heart"></i><span>${rcLikeCount || 0}</span></button></div>`;
+                        }
+                        html += `</div>`;
+                    }
+                    commentDiv.innerHTML = html; listArea.appendChild(commentDiv);
+                }
+            }
+            if (currentUser) { formArea.innerHTML = `<div class="flex items-center space-x-2"><input id="modalCommentInput" type="text" placeholder="コメントを入力..." class="border rounded-full px-4 py-2 text-xs w-full outline-none"><button onclick="submitModalComment()" class="text-xs bg-green-500 text-white px-4 py-2 rounded-full font-bold hover:bg-green-600 shrink-0">送信</button></div>`; }
+            else { formArea.innerHTML = '<p class="text-center text-xs text-gray-400">コメントするにはログインが必要です</p>'; }
+        }
+
+        function setReplyTarget(commentId, username) { activeParentCommentId = commentId; document.getElementById('replyTargetName').innerText = username; document.getElementById('replyTargetBadge').classList.remove('hidden'); const input = document.getElementById('modalCommentInput'); if (input) { input.value = `@${username} `; input.focus(); } }
+        function cancelReplyTarget() { activeParentCommentId = null; document.getElementById('replyTargetBadge').classList.add('hidden'); }
+
+        async function submitModalComment() {
+            const input = document.getElementById('modalCommentInput'); const text = input.value.trim(); if (!text || !activePostIdForComment) return;
+            const { error } = await exClient.from('comments').insert([{ post_id: activePostIdForComment, user_id: currentUser.id, content: text, parent_id: activeParentCommentId }]);
+            if (!error) {
+                const mentionMatches = text.match(/@([A-Za-z0-9_ぁ-んァ-ヶー一-龠々]+)/g);
+                if (mentionMatches) {
+                    for (const match of mentionMatches) {
+                        const targetName = match.replace('@', ''); if (targetName === myProfileName) continue;
+                        const { data: targetUser } = await exClient.from('public_profiles').select('id').eq('username', targetName).maybeSingle();
+                        if (targetUser) { await exClient.from('notifications').insert([{ user_id: targetUser.id, type: 'mention', sender_name: myProfileName, source_id: activePostIdForComment }]); }
+                    }
+                }
+                input.value = ''; cancelReplyTarget(); await renderComments(); 
+                if (currentTab === 'mypage') await renderMyPage(); else await fetchAndRenderPosts();
+            }
+        }
+
+        async function toggleCommentLike(commentId, isLiked) { if (!currentUser) { alert('ログインが必要です'); return; } if (isLiked) { await exClient.from('comment_likes').delete().eq('comment_id', commentId).eq('user_id', currentUser.id); } else { await exClient.from('comment_likes').insert([{ comment_id: commentId, user_id: currentUser.id }]); } await renderComments(); }
+        async function toggleLike(postId, isLiked) { 
+            if (!currentUser) { alert('ログインが必要です'); return; } 
+            if (isLiked) { await exClient.from('likes').delete().eq('post_id', postId).eq('user_id', currentUser.id); } 
+            else { await exClient.from('likes').insert([{ post_id: postId, user_id: currentUser.id }]); } 
+            if (currentTab === 'mypage') await renderMyPage(); else await fetchAndRenderPosts(); 
+        }
+
+        async function viewUserProfile(userId, updateHistory = true) {
+            const { data: profile } = await exClient.from('public_profiles').select('*').eq('id', userId).single(); if (!profile) return;
+            document.getElementById('viewAvatar').src = profile.avatar_url || "https://api.dicebear.com/7.x/adventurer/svg?seed=" + profile.username;
+            document.getElementById('viewName').innerText = profile.username; document.getElementById('viewBio').innerText = profile.bio || "自己紹介はまだありません。";
+            const btnArea = document.getElementById('followBtnArea'); btnArea.innerHTML = '';
+            if (currentUser && currentUser.id !== userId) {
+                const { data: follow } = await exClient.from('follows').select('id').eq('follower_id', currentUser.id).eq('following_id', userId).maybeSingle();
+                if (follow) { btnArea.innerHTML = `<button onclick="toggleFollow('${userId}', true)" class="bg-gray-200 text-gray-700 px-6 py-2 rounded-full font-bold text-sm hover:bg-gray-300 w-full">フォロー解除する</button>`; }
+                else { btnArea.innerHTML = `<button onclick="toggleFollow('${userId}', false)" class="bg-green-50 text-white px-6 py-2 rounded-full font-bold text-sm hover:bg-green-600 w-full">フォローする</button>`; }
+            }
+            document.getElementById('userViewModal').classList.remove('hidden');
+            if (updateHistory) { window.history.pushState({type: 'user', id: userId}, null, `#/user/${userId}`); }
+        }
+
+        function closeUserViewModal(updateHistory = false) {
+            document.getElementById('userViewModal').classList.add('hidden');
+            if (updateHistory) {
+                if (currentTab === 'mypage') window.history.pushState(null, null, '#/mypage');
+                else window.history.pushState(null, null, ' ');
+            }
+        }
+
+        async function toggleFollow(targetUserId, isFollowing) { if (isFollowing) { await exClient.from('follows').delete().eq('follower_id', currentUser.id).eq('following_id', targetUserId); } else { await exClient.from('follows').insert([{ follower_id: currentUser.id, following_id: targetUserId }]); } closeUserViewModal(true); if (currentTab === 'mypage') await renderMyPage(); else await fetchAndRenderPosts(); }
+        async function deletePost(postId) { if (confirm('削除しますか？')) { await exClient.from('posts').delete().eq('id', postId); if (currentTab === 'mypage') await renderMyPage(); else await fetchAndRenderPosts(); } }
+
+        async function handleAuthSubmit() {
+            const username = document.getElementById('authUsername').value.trim(); const password = document.getElementById('authPassword').value.trim(); if (!username || !password) return; const dummyEmail = `${username}@gmail.com`;
+            if (isSignUpMode) {
+                const { data: authData } = await exClient.auth.signUp({ email: dummyEmail, password });
+                if (authData.user) { await exClient.from('profiles').insert([{ id: authData.user.id, username: username, bio: "", avatar_url: null }]); location.reload(); }
+            } else { const { error } = await exClient.auth.signInWithPassword({ email: dummyEmail, password }); if (!error) location.reload(); }
+        }
+
+        async function saveProfile() {
+            if (!currentUser) return; const bioText = document.getElementById('editBio').value.trim(); const avatarFileInput = document.getElementById('avatarFile'); const avatarFile = avatarFileInput.files[0]; let avatarUrl = document.getElementById('myAvatar').src;
+            if (avatarFile) { const compressedBlob = await compressImage(avatarFile); const fileName = `${currentUser.id}_${Date.now()}.jpg`; await exClient.storage.from('avatars').upload(fileName, compressedBlob, { contentType: 'image/jpeg', upsert: true }); const { data: { publicUrl } } = exClient.storage.from('avatars').getPublicUrl(fileName); avatarUrl = publicUrl; }
+            await exClient.from('profiles').update({ bio: bioText, avatar_url: avatarUrl }).eq('id', currentUser.id); 
+            if (currentTab === 'mypage') await renderMyPage(); else location.reload();
+        }
+
+        async function handleLogout() { await exClient.auth.signOut(); location.reload(); }
+        function openAuthModal() { document.getElementById('authModal').classList.remove('hidden'); }
+        function closeAuthModal() { document.getElementById('authModal').classList.add('hidden'); }
+        function openPostModal() { document.getElementById('postModal').classList.remove('hidden'); }
+        function closePostModal() { document.getElementById('postModal').classList.add('hidden'); }
+        function openProfileModal() { document.getElementById('profileModal').classList.remove('hidden'); }
+        function closeProfileModal() { document.getElementById('profileModal').classList.add('hidden'); }
+        function openAnnounceModal() { document.getElementById('announceModal').classList.remove('hidden'); }
+        function closeAnnounceModal() { document.getElementById('announceModal').classList.add('hidden'); }
+        function openUserSearchModal() { document.getElementById('userSearchModal').classList.remove('hidden'); document.getElementById('userQueryInput').value = ''; searchUsers(); }
+        function closeUserSearchModal() { document.getElementById('userSearchModal').classList.add('hidden'); }
+        function toggleAuthMode() { isSignUpMode = !isSignUpMode; document.getElementById('authTitle').innerText = isSignUpMode ? '簡易アカウント作成' : 'ログイン'; document.getElementById('authSubmitBtn').innerText = isSignUpMode ? 'アカウントを作成する' : 'ログインする'; document.getElementById('authPasswordConfirm').classList.toggle('hidden', !isSignUpMode); }
+    </script>
 </body>
 </html>
