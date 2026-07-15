@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>LINE VOOM Style Clone</title>
+    <title>SIJ!Style</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
@@ -19,6 +19,7 @@
             min-height: 100vh;
         }
     </style>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 </head>
 <body>
 
@@ -203,6 +204,24 @@
 
         // 起動時に初期描画
         renderTimeline();
+        // Supabaseとの接続設定（プロジェクト設定画面から取得できるURLとキーを入力します）
+const SUPABASE_URL = "あなたのSupabaseのURL";
+const SUPABASE_ANON_KEY = "あなたのSupabaseのAnon Key";
+const supabase = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+// 例：投稿をデータベースに保存するJSコード
+async function submitPost() {
+    const text = document.getElementById('postText').value;
+    
+    // データベースに挿入
+    const { data, error } = await supabase
+        .from('posts')
+        .insert([{ content: text, user_id: currentUserId }]);
+        
+    if (!error) {
+        // 成功したらタイムラインを再読み込みして表示
+        fetchAndRenderPosts();
+    }
+}
     </script>
 </body>
 </html>
