@@ -6,6 +6,7 @@
     <title>SIJ!コミュニティ</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <style>
         body { background-color: #f3f4f6; font-family: sans-serif; }
         .main-container { max-width: 500px; margin: 0 auto; background-color: #ffffff; min-height: 100vh; }
@@ -42,7 +43,8 @@
         </div>
 
         <main id="timeline" class="flex-1 p-4 space-y-6 pb-24">
-            </main>
+            <div class="text-center text-gray-500 py-10">読み込み中...</div>
+        </main>
 
     </div>
 
@@ -105,45 +107,46 @@
     </div>
 
     <script>
-        // ブラウザのLocalStorageを使ってデータをローカルに保存する仕組み
-        let users = JSON.parse(localStorage.getItem('sij_users')) || [];
-        let posts = JSON.parse(localStorage.getItem('sij_posts')) || [];
-        let currentUser = JSON.parse(localStorage.getItem('sij_current_user')) || null;
+        // ==========================================
+        // 【最重要】例のキーをここに貼り付けてください！
+        // ==========================================
+        const EX_URL = "https://あなたのプロジェクトID.supabase.co";
+        const EX_KEY = "あなたのanonキー";
+        
+        const exClient = supabase.createClient(EX_URL, EX_KEY);
 
+        let currentUser = null;
         let isSignUpMode = true;
 
-        window.onload = () => {
-            // 最初期のみダミーの投稿を入れておく
-            if (posts.length === 0) {
-                posts = [
-                    {
-                        id: 1,
-                        username: "管理人ケンタ",
-                        avatar: "https://api.dicebear.com/7.x/adventurer/svg?seed=Kenta",
-                        content: "SIJ!コミュニティへようこそ！ここがみんなの新しい遊び場です！",
-                        media: "https://images.unsplash.com/photo-1565299624946-b28f40a0ae38?w=600&auto=format&fit=crop&q=60",
-                        created_at: new Date().toISOString()
-                    }
-                ];
-                localStorage.setItem('sij_posts', JSON.stringify(posts));
-            }
-            updateUserUI();
-            renderTimeline();
+        window.onload = async () => {
+            await checkUser();
+            await fetchAndRenderPosts();
         };
 
-        // UIをログイン状態に合わせて更新する
-        function updateUserUI() {
-            if (currentUser) {
-                document.getElementById('userInfo').classList.remove('hidden');
-                document.getElementById('profileBar').classList.remove('hidden');
-                document.getElementById('postBtn').classList.remove('hidden');
-                document.getElementById('logoutBtn').classList.remove('hidden');
-                document.getElementById('authBtn').classList.add('hidden');
+        // ログイン状態の確認
+        async function checkUser() {
+            const { data: { user } } = await exClient.auth.getUser();
+            if (user) {
+                currentUser = user;
                 
-                document.getElementById('myAvatar').src = currentUser.avatar_url || "https://api.dicebear.com/7.x/adventurer/svg?seed=" + currentUser.username;
-                document.getElementById('myName').innerText = currentUser.username;
-                document.getElementById('myBio').innerText = currentUser.bio || "未設定";
-                document.getElementById('editBio').value = currentUser.bio || "";
+                const { data: profile } = await exClient
+                    .from('profiles')
+                    .select('*')
+                    .eq('id', user.id)
+                    .single();
+
+                if (profile) {
+                    document.getElementById('userInfo').classList.remove('hidden');
+                    document.getElementById('profileBar').classList.remove('hidden');
+                    document.getElementById('postBtn').classList.remove('hidden');
+                    document.getElementById('logoutBtn').classList.remove('hidden');
+                    document.getElementById('authBtn').classList.add('hidden');
+                    
+                    document.getElementById('myAvatar').src = profile.avatar_url || "https://api.dicebear.com/7.x/adventurer/svg?seed=" + profile.username;
+                    document.getElementById('myName').innerText = profile.username;
+                    document.getElementById('myBio').innerText = profile.bio || "未設定";
+                    document.getElementById('editBio').value = profile.bio || "";
+                }
             } else {
                 document.getElementById('userInfo').classList.add('hidden');
                 document.getElementById('profileBar').classList.add('hidden');
@@ -153,26 +156,40 @@
             }
         }
 
-        // タイムライン描画
-        function renderTimeline() {
+        // 投稿一覧を「例の場所」から同期して表示する
+        async function fetchAndRenderPosts() {
             const timeline = document.getElementById('timeline');
+            
+            const { data: posts, error } = await exClient
+                .from('posts')
+                .select(`
+                    id, content, media_url, created_at,
+                    profiles ( username, avatar_url )
+                `)
+                .order('created_at', { ascending: false });
+
+            if (error || !posts) {
+                timeline.innerHTML = `<div class="text-center text-red-500 py-10">データの読み込みに失敗しました</div>`;
+                return;
+            }
+
             timeline.innerHTML = '';
-
-            // 最新の投稿が上にくるように並び替える
-            const sortedPosts = [...posts].sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
-
-            sortedPosts.forEach(post => {
+            
+            posts.forEach(post => {
+                const authorName = post.profiles?.username || "名無しユーザー";
+                const authorAvatar = post.profiles?.avatar_url || "https://api.dicebear.com/7.x/adventurer/svg?seed=" + authorName;
+                
                 const postCard = document.createElement('div');
                 postCard.className = "bg-white border border-gray-200 rounded-xl overflow-hidden shadow-sm";
                 postCard.innerHTML = `
                     <div class="flex items-center p-3">
-                        <img src="${post.avatar}" class="w-10 h-10 rounded-full border mr-3" alt="avatar">
-                        <span class="font-bold text-gray-800">${post.username}</span>
+                        <img src="${authorAvatar}" class="w-10 h-10 rounded-full border mr-3" alt="avatar">
+                        <span class="font-bold text-gray-800">${authorName}</span>
                     </div>
                     <div class="px-3 pb-3 text-gray-800 text-sm">${post.content}</div>
-                    ${post.media ? `
+                    ${post.media_url ? `
                         <div class="w-full bg-black flex justify-center">
-                            <img src="${post.media}" class="max-h-96 w-full object-cover" alt="post media">
+                            <img src="${post.media_url}" class="max-h-96 w-full object-cover" alt="post media">
                         </div>
                     ` : ''}
                 `;
@@ -180,17 +197,7 @@
             });
         }
 
-        // 画像ファイルをテキストデータ（Base64URL）に変換する関数
-        function convertFileToBase64(file) {
-            return new Promise((resolve, reject) => {
-                const reader = new FileReader();
-                reader.readAsDataURL(file);
-                reader.onload = () => resolve(reader.result);
-                reader.onerror = error => reject(error);
-            });
-        }
-
-        // アカウント登録 or ログイン処理
+        // アカウント作成・ログイン処理（メアド不要、二重パスワード確認対応）
         async function handleAuthSubmit() {
             const username = document.getElementById('authUsername').value.trim();
             const password = document.getElementById('authPassword').value.trim();
@@ -200,6 +207,9 @@
                 return;
             }
 
+            // メアド不要にするため、内部的にダミーのメアド形式にして「例の場所」へ送る
+            const dummyEmail = `${username}@sij-community.local`;
+
             if (isSignUpMode) {
                 const passwordConfirm = document.getElementById('authPasswordConfirm').value.trim();
                 
@@ -208,139 +218,142 @@
                     return;
                 }
 
-                // すでに同じ名前のユーザーがいるか確認
-                const existUser = users.find(u => u.username === username);
-                if (existUser) {
-                    alert('このユーザー名はすでに使用されています。');
+                const { data: authData, error: authError } = await exClient.auth.signUp({ email: dummyEmail, password });
+                if (authError) {
+                    alert('登録エラー: ' + authError.message);
                     return;
                 }
 
-                // 新規ユーザー追加
-                const newUser = {
-                    username: username,
-                    password: password,
-                    bio: "",
-                    avatar_url: ""
-                };
-                users.push(newUser);
-                localStorage.setItem('sij_users', JSON.stringify(users));
+                if (authData.user) {
+                    const { error: profileError } = await exClient
+                        .from('profiles')
+                        .insert([{
+                            id: authData.user.id,
+                            username: username,
+                            bio: "",
+                            avatar_url: null
+                        }]);
 
-                currentUser = newUser;
-                localStorage.setItem('sij_current_user', JSON.stringify(currentUser));
-
-                alert('アカウント作成＆ログインが成功しました！');
-                closeAuthModal();
-                updateUserUI();
-                location.reload();
+                    if (profileError) {
+                        alert('プロフィール登録エラー: ' + profileError.message);
+                    } else {
+                        alert('アカウントを作成しました！自動でログインします。');
+                        location.reload();
+                    }
+                }
             } else {
-                // ログイン処理
-                const foundUser = users.find(u => u.username === username && u.password === password);
-                if (!foundUser) {
-                    alert('ユーザー名、またはパスワードが間違っています。');
-                    return;
+                const { error } = await exClient.auth.signInWithPassword({ email: dummyEmail, password });
+                if (error) {
+                    alert('ログインエラー: パスワードまたはユーザー名が間違っています。');
+                } else {
+                    location.reload();
                 }
-
-                currentUser = foundUser;
-                localStorage.setItem('sij_current_user', JSON.stringify(currentUser));
-
-                alert('ログインしました！');
-                closeAuthModal();
-                updateUserUI();
-                location.reload();
             }
         }
 
-        // プロフィール保存
+        // プロフィール情報（アイコン、自己紹介）を「例の場所」に同期保存
         async function saveProfile() {
             if (!currentUser) return;
 
             const bioText = document.getElementById('editBio').value.trim();
             const avatarFile = document.getElementById('avatarFile').files[0];
-            
-            // アイコン画像ファイルがある場合、Base64形式に変換して保存
+            let avatarUrl = document.getElementById('myAvatar').src;
+
+            // ファイルが選択されている場合は「例の場所」へアップロード
             if (avatarFile) {
-                try {
-                    currentUser.avatar_url = await convertFileToBase64(avatarFile);
-                } catch (e) {
-                    alert('画像の読み込みに失敗しました。');
+                const fileExt = avatarFile.name.split('.').pop();
+                const fileName = `${currentUser.id}_${Date.now()}.${fileExt}`;
+                const filePath = `${fileName}`;
+
+                const { error: uploadError } = await exClient.storage
+                    .from('avatars')
+                    .upload(filePath, avatarFile, { upsert: true });
+
+                if (uploadError) {
+                    alert('画像の保存に失敗しました: ' + uploadError.message);
                     return;
                 }
+
+                const { data: { publicUrl } } = exClient.storage
+                    .from('avatars')
+                    .getPublicUrl(filePath);
+
+                avatarUrl = publicUrl;
             }
 
-            currentUser.bio = bioText;
+            // プロフィールDBを更新
+            const { error: updateError } = await exClient
+                .from('profiles')
+                .update({
+                    bio: bioText,
+                    avatar_url: avatarUrl
+                })
+                .eq('id', currentUser.id);
 
-            // ローカルの全ユーザーリスト内にある自分自身の情報も更新
-            users = users.map(u => u.username === currentUser.username ? currentUser : u);
-            localStorage.setItem('sij_users', JSON.stringify(users));
-            localStorage.setItem('sij_current_user', JSON.stringify(currentUser));
-
-            // すでに自分が投稿した過去の投稿アイコンも、今回の新しい画像に更新する
-            posts = posts.map(p => {
-                if (p.username === currentUser.username) {
-                    p.avatar = currentUser.avatar_url || "https://api.dicebear.com/7.x/adventurer/svg?seed=" + currentUser.username;
-                }
-                return p;
-            });
-            localStorage.setItem('sij_posts', JSON.stringify(posts));
-
-            alert('プロフィールを保存しました！');
-            closeProfileModal();
-            updateUserUI();
-            renderTimeline();
+            if (updateError) {
+                alert('保存に失敗しました: ' + updateError.message);
+            } else {
+                alert('プロフィールを更新しました！');
+                closeProfileModal();
+                location.reload();
+            }
         }
 
-        // 新規投稿をローカルに保存
+        // 投稿を「例の場所」に同期保存
         async function submitPost() {
             if (!currentUser) return;
-
             const text = document.getElementById('postText').value.trim();
             const mediaFile = document.getElementById('postMediaFile').files[0];
-            let mediaUrl = "";
+            let mediaUrl = null;
 
-            if (!text && !mediaFile) {
-                alert('投稿内容を入力するか、画像を選択してください！');
-                return;
-            }
+            if (!text && !mediaFile) return;
 
-            // 投稿に画像ファイルが添付されている場合
             if (mediaFile) {
-                try {
-                    mediaUrl = await convertFileToBase64(mediaFile);
-                } catch (e) {
-                    alert('画像のアップロードに失敗しました。');
+                const fileExt = mediaFile.name.split('.').pop();
+                const fileName = `${currentUser.id}_${Date.now()}.${fileExt}`;
+                const filePath = `${fileName}`;
+
+                const { error: uploadError } = await exClient.storage
+                    .from('posts')
+                    .upload(filePath, mediaFile);
+
+                if (uploadError) {
+                    alert('画像の保存に失敗しました: ' + uploadError.message);
                     return;
                 }
+
+                const { data: { publicUrl } } = exClient.storage
+                    .from('posts')
+                    .getPublicUrl(filePath);
+
+                mediaUrl = publicUrl;
             }
 
-            const newPost = {
-                id: Date.now(),
-                username: currentUser.username,
-                avatar: currentUser.avatar_url || "https://api.dicebear.com/7.x/adventurer/svg?seed=" + currentUser.username,
-                content: text,
-                media: mediaUrl || null,
-                created_at: new Date().toISOString()
-            };
+            const { error } = await exClient
+                .from('posts')
+                .insert([{
+                    id: Math.floor(Math.random() * 10000000),
+                    user_id: currentUser.id,
+                    content: text,
+                    media_url: mediaUrl
+                }]);
 
-            posts.push(newPost);
-            localStorage.setItem('sij_posts', JSON.stringify(posts));
-
-            // 入力欄をリセット
-            document.getElementById('postText').value = '';
-            document.getElementById('postMediaFile').value = '';
-
-            closePostModal();
-            renderTimeline();
+            if (error) {
+                alert('投稿に失敗しました: ' + error.message);
+            } else {
+                closePostModal();
+                await fetchAndRenderPosts();
+            }
         }
 
         // ログアウト処理
-        function handleLogout() {
+        async function handleLogout() {
+            await exClient.auth.signOut();
             currentUser = null;
-            localStorage.removeItem('sij_current_user');
             alert('ログアウトしました');
-            updateUserUI();
+            location.reload();
         }
 
-        // 各ポップアップ（モーダル）切り替えの関数
         function openAuthModal() { document.getElementById('authModal').classList.remove('hidden'); }
         function closeAuthModal() { document.getElementById('authModal').classList.add('hidden'); }
         function openPostModal() { document.getElementById('postModal').classList.remove('hidden'); }
