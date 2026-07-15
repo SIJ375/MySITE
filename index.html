@@ -118,7 +118,7 @@
 
         window.onload = async () => {
             await checkUser();
-            await fetchAnnouncement(); // ここで初回読み込みが行われます
+            await fetchAnnouncement(); 
             await handleUrlRouting();
             if (currentUser) {
                 await checkUnreadNotifications();
@@ -219,7 +219,6 @@
             if (count > 0) { badge.innerText = count; badge.classList.remove('hidden'); } else { badge.classList.add('hidden'); }
         }
 
-        /* 🛠️ 【修正箇所】告知表示バグの修正版関数 */
         async function fetchAnnouncement() {
             const { data, error } = await exClient.from('announcements').select('content').order('created_at', { ascending: false }).limit(1);
             const announceArea = document.getElementById('announceArea');
@@ -227,13 +226,12 @@
             
             if (!error && data && data.length > 0 && data[0].content) {
                 announceText.innerText = data[0].content;
-                announceArea.classList.remove('hidden'); // hiddenを解除して表示
+                announceArea.classList.remove('hidden');
             } else {
-                announceArea.classList.add('hidden'); // データがない時は隠す
+                announceArea.classList.add('hidden');
             }
         }
 
-        /* 🛠️ 【修正箇所】告知更新時にすぐ画面へ反映される修正版関数 */
         async function submitAnnouncement() {
             const text = document.getElementById('announceInputText').value.trim(); 
             if (!text) return;
@@ -242,7 +240,7 @@
                 alert('お知らせを更新しました！'); 
                 document.getElementById('announceInputText').value = ''; 
                 closeAnnounceModal(); 
-                await fetchAnnouncement(); // 投稿後すぐに画面に反映
+                await fetchAnnouncement(); 
             }
         }
 
@@ -351,7 +349,6 @@
             }
         }
 
-        /* 🛠️ 完全に補完したタイムライン表示関数 */
         async function fetchAndRenderPosts() {
             const timeline = document.getElementById('timeline');
             timeline.innerHTML = '<div class="text-center text-gray-500 py-10">タイムラインを読み込み中...</div>';
@@ -372,77 +369,7 @@
             for (const post of posts) {
                 const { count: likeCount } = await exClient.from('likes').select('*', { count: 'exact', head: true }).eq('post_id', post.id);
                 const { count: commentCount } = await exClient.from('comments').select('*', { count: 'exact', head: true }).eq('post_id', post.id);
-                let isLiked = false; if (currentUser) { const { data: myLike } = await exClient.from('likes').select('id').eq('post_id', post.id).eq('user_id', currentUser.id).maybeSingle(); if (myLike) isLiked = true; }
-                extendedPosts.push({ ...post, likeCount: likeCount || 0, commentCount: commentCount || 0, isLiked });
-            }
-            if (currentTab === 'recommend') { extendedPosts.sort((a, b) => (b.likeCount !== a.likeCount) ? b.likeCount - a.likeCount : new Date(b.created_at) - new Date(a.created_at)); }
-
-            timeline.innerHTML = '';
-            extendedPosts.forEach(post => {
-                const authorName = post.profiles?.username || "名無しユーザー";
-                const authorAvatar = post.profiles?.avatar_url || "https://api.dicebear.com/7.x/adventurer/svg?seed=" + authorName;
-                
-                const videoEmbedHtml = getYouTubeEmbedHtml(post.content);
-                const isMyPost = currentUser && currentUser.id === post.user_id;
-
-                const postCard = document.createElement('div');
-                postCard.id = `post-card-${post.id}`;
-                postCard.className = "bg-white border border-gray-200 rounded-xl overflow-hidden shadow-sm mb-4 transition-all duration-500";
-                
-                postCard.innerHTML = `
-                    <div class="flex justify-between items-center p-3">
-                        <div class="flex items-center cursor-pointer hover:opacity-80" onclick="viewUserProfile('${post.user_id}')">
-                            <img src="${authorAvatar}" class="w-10 h-10 rounded-full border mr-3 object-cover">
-                            <span class="font-bold text-gray-800">${authorName}</span>
-                        </div>
-                        ${isMyPost ? `<button onclick="deletePost(${post.id})" class="text-gray-400 hover:text-red-500"><i class="fa-solid fa-trash-can"></i></button>` : ''}
-                    </div>
-                    <div class="px-3 pb-3 text-gray-800 text-sm whitespace-pre-wrap">${parseRichText(post.content)}</div>
-                    ${videoEmbedHtml}
-                    ${renderMediaAttachment(post.media_url)}
-                    <div class="p-3 border-t border-gray-100 flex items-center space-x-6">
-                        <button onclick="toggleLike(${post.id}, ${post.isLiked})" class="flex items-center space-x-1 ${post.isLiked ? 'text-red-500' : 'text-gray-400'} hover:scale-105 transition">
-                            <i class="${post.isLiked ? 'fa-solid' : 'fa-regular'} fa-heart text-lg"></i>
-                            <span class="text-xs font-bold">${post.likeCount}</span>
-                        </button>
-                        <button onclick="openCommentModal(${post.id})" class="flex items-center space-x-1 text-gray-400 hover:text-green-500 transition">
-                            <i class="fa-regular fa-comment text-lg"></i>
-                            <span class="text-xs font-bold">${post.commentCount}</span>
-                        </button>
-                        <button onclick="copyPostLink(${post.id})" class="flex items-center space-x-1 text-gray-400 hover:text-blue-500 transition" title="リンクをコピー">
-                            <i class="fa-regular fa-share-from-square text-lg"></i>
-                            <span class="text-xs font-bold">シェア</span>
-                        </button>
-                    </div>
-                `;
-                timeline.appendChild(postCard);
-            });
-        }
-
-        // モーダルの開閉用関数など、必要な残りの共通関数群
-        function openAnnounceModal() { document.getElementById('announceModal').classList.remove('hidden'); }
-        function closeAnnounceModal() { document.getElementById('announceModal').classList.add('hidden'); }
-        function openPostModal() { document.getElementById('postModal').classList.remove('hidden'); }
-        function closePostModal() { document.getElementById('postModal').classList.add('hidden'); }
-        function openAuthModal() { document.getElementById('authModal').classList.remove('hidden'); }
-        function closeAuthModal() { document.getElementById('authModal').classList.add('hidden'); }
-        function openProfileModal() { document.getElementById('profileModal').classList.remove('hidden'); }
-        function closeProfileModal() { document.getElementById('profileModal').classList.add('hidden'); }
-        function openUserSearchModal() { document.getElementById('userSearchModal').classList.remove('hidden'); }
-        function closeUserSearchModal() { document.getElementById('userSearchModal').classList.add('hidden'); }
-        
-        // 🔗 投稿の個別リンクを生成してクリップボードにコピーする関数
-        function copyPostLink(postId) {
-            const baseUrl = window.location.origin + window.location.pathname;
-            const shareUrl = `${baseUrl}#/post/${postId}`;
-
-            navigator.clipboard.writeText(shareUrl).then(() => {
-                alert('投稿の個別リンクをコピーしました！');
-            }).catch(err => {
-                console.error('コピーに失敗しました: ', err);
-                alert('リンクのコピーに失敗しました。');
-            });
-        }
-</script>
+                let isLiked = false; if (currentUser) { const { data: myLike }
+                                                       
 </body>
 </html>
