@@ -15,6 +15,8 @@
             100% { background-color: #ffffff; }
         }
         .highlight-post { animation: highlight 2.5s ease-out forwards; }
+        .video-container { position: relative; padding-bottom: 56.25%; height: 0; overflow: hidden; max-width: 100%; }
+        .video-container iframe { position: absolute; top: 0; left: 0; width: 100%; height: 100%; }
     </style>
 </head>
 <body>
@@ -63,17 +65,12 @@
         </header>
 
         <div id="profileBar" class="hidden bg-gray-50 p-3 border-b border-gray-100 text-xs text-gray-600 flex justify-between items-center">
-            <div>
-                <span class="font-bold">自己紹介:</span> <span id="myBio">未設定</span>
-            </div>
+            <div><span class="font-bold">自己紹介:</span> <span id="myBio">未設定</span></div>
             <button onclick="openProfileModal()" class="text-green-600 hover:underline">編集</button>
         </div>
 
         <div id="announceArea" class="hidden bg-green-50 border-b border-green-200 p-4 space-y-2 text-sm text-green-800">
-            <div class="flex items-center space-x-2 font-bold text-green-700">
-                <i class="fa-solid fa-bullhorn animate-bounce"></i>
-                <span>公式からのお知らせ</span>
-            </div>
+            <div class="flex items-center space-x-2 font-bold text-green-700"><i class="fa-solid fa-bullhorn animate-bounce"></i><span>公式からのお知らせ</span></div>
             <p id="announceText" class="whitespace-pre-wrap leading-relaxed font-semibold">現在お知らせはありません。</p>
         </div>
 
@@ -82,67 +79,23 @@
         </main>
 
         <nav class="fixed bottom-0 left-0 right-0 max-w-[500px] mx-auto bg-white border-t border-gray-200 flex justify-around py-3 z-10 shadow-lg">
-            <button id="tabLatest" onclick="switchTab('latest')" class="flex flex-col items-center text-green-600 font-bold text-xs w-1/5">
-                <i class="fa-solid fa-globe text-lg mb-0.5"></i>
-                <span>最新</span>
-            </button>
-            <button id="tabRecommend" onclick="switchTab('recommend')" class="flex flex-col items-center text-gray-400 font-bold text-xs w-1/5">
-                <i class="fa-solid fa-fire text-lg mb-0.5"></i>
-                <span>おすすめ</span>
-            </button>
-            <button id="tabFollow" onclick="switchTab('follow')" class="flex flex-col items-center text-gray-400 font-bold text-xs w-1/5">
-                <i class="fa-solid fa-user-group text-lg mb-0.5"></i>
-                <span>フォロー</span>
-            </button>
-            <button id="tabNotification" onclick="switchTab('notification')" class="flex flex-col items-center text-gray-400 font-bold text-xs w-1/5 relative">
-                <i class="fa-solid fa-bell text-lg mb-0.5"></i>
-                <span>通知</span>
-                <span id="navNotifyBadge" class="hidden absolute top-2 right-4 bg-red-500 text-white rounded-full text-[10px] w-4 h-4 flex items-center justify-center font-bold">0</span>
-            </button>
-            <button id="tabMyPage" onclick="switchTab('mypage')" class="flex flex-col items-center text-gray-400 font-bold text-xs w-1/5">
-                <i class="fa-solid fa-user text-lg mb-0.5"></i>
-                <span>マイページ</span>
-            </button>
+            <button id="tabLatest" onclick="switchTab('latest')" class="flex flex-col items-center text-green-600 font-bold text-xs w-1/5"><i class="fa-solid fa-globe text-lg mb-0.5"></i><span>最新</span></button>
+            <button id="tabRecommend" onclick="switchTab('recommend')" class="flex flex-col items-center text-gray-400 font-bold text-xs w-1/5"><i class="fa-solid fa-fire text-lg mb-0.5"></i><span>おすすめ</span></button>
+            <button id="tabFollow" onclick="switchTab('follow')" class="flex flex-col items-center text-gray-400 font-bold text-xs w-1/5"><i class="fa-solid fa-user-group text-lg mb-0.5"></i><span>フォロー</span></button>
+            <button id="tabNotification" onclick="switchTab('notification')" class="flex flex-col items-center text-gray-400 font-bold text-xs w-1/5 relative"><i class="fa-solid fa-bell text-lg mb-0.5"></i><span>通知</span><span id="navNotifyBadge" class="hidden absolute top-2 right-4 bg-red-500 text-white rounded-full text-[10px] w-4 h-4 flex items-center justify-center font-bold">0</span></button>
+            <button id="tabMyPage" onclick="switchTab('mypage')" class="flex flex-col items-center text-gray-400 font-bold text-xs w-1/5"><i class="fa-solid fa-user text-lg mb-0.5"></i><span>マイページ</span></button>
         </nav>
 
     </div>
 
-    <div id="commentModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center hidden z-50 p-4">
-        <div class="bg-white rounded-lg w-full max-w-md p-6 flex flex-col max-h-[85vh]">
-            <div class="flex justify-between items-center mb-4 border-b pb-2">
-                <h3 class="text-lg font-bold text-gray-800"><i class="fa-regular fa-comments text-green-600 mr-1"></i> コメント</h3>
-                <button onclick="closeCommentModal(true)" class="text-gray-500 hover:text-gray-800 text-xl">&times;</button>
-            </div>
-            <div id="commentListArea" class="flex-1 overflow-y-auto space-y-4 pr-1 mb-4 text-sm"></div>
-            <div id="replyTargetBadge" class="hidden text-xs bg-blue-50 text-blue-700 p-2 rounded mb-2 flex justify-between items-center">
-                <span><strong id="replyTargetName"></strong> さんに返信中...</span>
-                <button onclick="cancelReplyTarget()" class="text-gray-400 hover:text-gray-600">&times; 取消</button>
-            </div>
-            <div id="commentFormArea"></div>
-        </div>
-    </div>
-
-    <div id="userSearchModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center hidden z-50 p-4">
-        <div class="bg-white rounded-lg w-full max-w-sm p-6">
-            <div class="flex justify-between items-center mb-4"><h3 class="text-lg font-bold">ユーザーを探す</h3><button onclick="closeUserSearchModal()" class="text-gray-500 hover:text-gray-800 text-xl">&times;</button></div>
-            <input id="userQueryInput" type="text" class="border rounded-full px-3 py-1.5 text-sm w-full outline-none mb-4" placeholder="ユーザー名を入力..." oninput="searchUsers()">
-            <div id="userSearchResults" class="space-y-2 max-h-60 overflow-y-auto"></div>
-        </div>
-    </div>
-
-    <div id="userViewModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center hidden z-50 p-4">
-        <div class="bg-white rounded-lg w-full max-w-sm p-6 text-center">
-            <div class="flex justify-end"><button onclick="closeUserViewModal(true)" class="text-gray-500 hover:text-gray-800 text-xl">&times;</button></div>
-            <img id="viewAvatar" class="w-24 h-24 rounded-full border mx-auto mb-4 object-cover" src="">
-            <h3 id="viewName" class="text-xl font-bold text-gray-800 mb-2"></h3>
-            <p id="viewBio" class="text-sm text-gray-600 bg-gray-50 p-3 rounded-lg min-h-[50px] flex items-center justify-center whitespace-pre-wrap mb-4"></p>
-            <div id="followBtnArea"></div>
-        </div>
-    </div>
-
+    <div id="commentModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center hidden z-50 p-4"><div class="bg-white rounded-lg w-full max-w-md p-6 flex flex-col max-h-[85vh]"><div class="flex justify-between items-center mb-4 border-b pb-2"><h3 class="text-lg font-bold text-gray-800"><i class="fa-regular fa-comments text-green-600 mr-1"></i> コメント</h3><button onclick="closeCommentModal(true)" class="text-gray-500 hover:text-gray-800 text-xl">&times;</button></div><div id="commentListArea" class="flex-1 overflow-y-auto space-y-4 pr-1 mb-4 text-sm"></div><div id="replyTargetBadge" class="hidden text-xs bg-blue-50 text-blue-700 p-2 rounded mb-2 flex justify-between items-center"><span><strong id="replyTargetName"></strong> さんに返信中...</span><button onclick="cancelReplyTarget()" class="text-gray-400 hover:text-gray-600">&times; 取消</button></div><div id="commentFormArea"></div></div></div>
+    <div id="userSearchModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center hidden z-50 p-4"><div class="bg-white rounded-lg w-full max-w-sm p-6"><div class="flex justify-between items-center mb-4"><h3 class="text-lg font-bold">ユーザーを探す</h3><button onclick="closeUserSearchModal()" class="text-gray-500 hover:text-gray-800 text-xl">&times;</button></div><input id="userQueryInput" type="text" class="border rounded-full px-3 py-1.5 text-sm w-full outline-none mb-4" placeholder="ユーザー名を入力..." oninput="searchUsers()"><div id="userSearchResults" class="space-y-2 max-h-60 overflow-y-auto"></div></div></div>
+    <div id="userViewModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center hidden z-50 p-4"><div class="bg-white rounded-lg w-full max-w-sm p-6 text-center"><div class="flex justify-end"><button onclick="closeUserViewModal(true)" class="text-gray-500 hover:text-gray-800 text-xl">&times;</button></div><img id="viewAvatar" class="w-24 h-24 rounded-full border mx-auto mb-4 object-cover" src=""><h3 id="viewName" class="text-xl font-bold text-gray-800 mb-2"></h3><p id="viewBio" class="text-sm text-gray-600 bg-gray-50 p-3 rounded-lg min-h-[50px] flex items-center justify-center whitespace-pre-wrap mb-4"></p><div id="followBtnArea"></div></div></div>
     <div id="authModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center hidden z-50 p-4"><div class="bg-white rounded-lg w-full max-w-md p-6"><div class="flex justify-between items-center mb-4"><h3 id="authTitle" class="text-lg font-bold">簡易アカウント作成</h3><button onclick="closeAuthModal()" class="text-gray-500 hover:text-gray-800 text-xl">&times;</button></div><div class="space-y-3"><input id="authUsername" type="text" class="w-full border p-2 rounded text-sm" placeholder="ユーザー名"><input id="authPassword" type="password" class="w-full border p-2 rounded text-sm" placeholder="パスワード（6文字以上）"><input id="authPasswordConfirm" type="password" class="w-full border p-2 rounded text-sm" placeholder="パスワード確認（もう一度入力）"><div class="flex flex-col gap-2 pt-2"><button id="authSubmitBtn" onclick="handleAuthSubmit()" class="w-full bg-green-500 text-white py-2 rounded font-bold hover:bg-green-600 text-sm">アカウントを作成する</button><button id="authToggleBtn" onclick="toggleAuthMode()" class="text-xs text-gray-500 underline hover:text-gray-700">すでにアカウントをお持ちの方（ログイン）</button></div></div></div></div>
     <div id="profileModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center hidden z-50 p-4"><div class="bg-white rounded-lg w-full max-w-md p-6"><div class="flex justify-between items-center mb-4"><h3 class="text-lg font-bold">プロフィール編集</h3><button onclick="closeProfileModal()" class="text-gray-500 hover:text-gray-800 text-xl">&times;</button></div><div class="space-y-4"><div><label class="block text-xs font-bold text-gray-700 mb-1">アイコン画像</label><input id="avatarFile" type="file" accept="image/*" class="w-full text-xs text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-xs file:font-semibold file:bg-green-50 file:text-green-700 hover:file:bg-green-100"></div><div><label class="block text-xs font-bold text-gray-700 mb-1">一言（自己紹介）</label><input id="editBio" type="text" class="w-full border p-2 rounded text-sm" placeholder="今の一言を入力してください"></div><button onclick="saveProfile()" class="w-full bg-green-500 text-white py-2 rounded font-bold hover:bg-green-600 text-sm">保存する</button></div></div></div>
-    <div id="postModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center hidden z-50 p-4"><div class="bg-white rounded-lg w-full max-w-md p-6"><div class="flex justify-between items-center mb-4"><h3 class="text-lg font-bold">新規投稿</h3><button onclick="closePostModal()" class="text-gray-500 hover:text-gray-800 text-xl">&times;</button></div><textarea id="postText" class="w-full border border-gray-300 rounded p-2 h-24 resize-none mb-4" placeholder="今なにしてる？ #ハッシュタグ も使えるよ！"></textarea><label class="block text-xs font-bold text-gray-700 mb-1">画像を追加</label><input id="postMediaFile" type="file" accept="image/*" class="w-full text-xs text-gray-500 mb-4 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-xs file:font-semibold file:bg-green-50 file:text-green-700 hover:file:bg-green-100"><button onclick="submitPost()" class="w-full bg-green-500 text-white py-2 rounded font-bold hover:bg-green-600">投稿する</button></div></div>
+    
+    <div id="postModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center hidden z-50 p-4"><div class="bg-white rounded-lg w-full max-w-md p-6"><div class="flex justify-between items-center mb-4"><h3 class="text-lg font-bold">新規投稿</h3><button onclick="closePostModal()" class="text-gray-500 hover:text-gray-800 text-xl">&times;</button></div><textarea id="postText" class="w-full border border-gray-300 rounded p-2 h-24 resize-none mb-4" placeholder="今なにしてる？ 画像や短い動画(15MBまで)も載せられるよ！"></textarea><label class="block text-xs font-bold text-gray-700 mb-1">画像または動画を追加（任意）</label><input id="postMediaFile" type="file" accept="image/*,video/*" class="w-full text-xs text-gray-500 mb-4 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-xs file:font-semibold file:bg-green-50 file:text-green-700 hover:file:bg-green-100"><button id="realPostSubmitBtn" onclick="submitPost()" class="w-full bg-green-500 text-white py-2 rounded font-bold hover:bg-green-600">投稿する</button></div></div>
+    
     <div id="announceModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center hidden z-50 p-4"><div class="bg-white rounded-lg w-full max-w-md p-6"><div class="flex justify-between items-center mb-4"><h3 class="text-lg font-bold text-red-600">公式お知らせを投稿</h3><button onclick="closeAnnounceModal()" class="text-gray-500 hover:text-gray-800 text-xl">&times;</button></div><textarea id="announceInputText" class="w-full border border-gray-300 rounded p-2 h-32 resize-none mb-4" placeholder="ユーザー全員に見せる重要なお知らせを入力..."></textarea><button onclick="submitAnnouncement()" class="w-full bg-red-500 text-white py-2 rounded font-bold hover:bg-red-600">お知らせを更新する</button></div></div>
 
     <script>
@@ -163,23 +116,17 @@
         window.onload = async () => {
             await checkUser();
             await fetchAnnouncement();
-            
-            // 🔗 ハッシュルーティング処理の初期化
             await handleUrlRouting();
-
             if (currentUser) {
                 await checkUnreadNotifications();
                 setInterval(checkUnreadNotifications, 3000);
             }
         };
 
-        window.onpopstate = async () => {
-            await handleUrlRouting();
-        };
+        window.onpopstate = async () => { await handleUrlRouting(); };
 
         async function handleUrlRouting() {
             const hash = window.location.hash;
-            
             document.getElementById('commentModal').classList.add('hidden');
             document.getElementById('userViewModal').classList.add('hidden');
             activePostIdForComment = null;
@@ -193,9 +140,36 @@
             } else if (hash === '#/mypage') {
                 await switchTab('mypage', false);
             } else {
-                // 何もなければ現在選択されている通常のタブを表示
                 if (currentTab === 'mypage') currentTab = 'latest';
                 await switchTab(currentTab, false);
+            }
+        }
+
+        function getYouTubeEmbedHtml(text) {
+            if (!text) return "";
+            const regExp = /^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|\&v=)([^#\&\?]*).*/;
+            const matches = text.match(/(https?:\/\/[^\s]+)/g);
+            if (!matches) return "";
+            let embedHtml = "";
+            matches.forEach(url => {
+                const match = url.match(regExp);
+                if (match && match[2].length === 11) {
+                    const videoId = match[2];
+                    embedHtml += `<div class="video-container bg-black"><iframe src="https://www.youtube.com/embed/${videoId}" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowfullscreen></iframe></div>`;
+                }
+            });
+            return embedHtml;
+        }
+
+        // 🎬 media_url の中身が画像か動画かを識別してHTMLを出し分けるヘルパー関数
+        function renderMediaAttachment(url) {
+            if (!url) return "";
+            // 拡張子やクエリパラメータから動画（mp4, mov, quicktime等）を判別
+            const isVideo = url.toLowerCase().match(/\.(mp4|mov|webm|ogv|3gp|m4v)/) || url.includes('video');
+            if (isVideo) {
+                return `<div class="w-full bg-black flex justify-center"><video src="${url}" controls playsinline class="max-h-96 w-full object-contain"></video></div>`;
+            } else {
+                return `<div class="w-full bg-black flex justify-center"><img src="${url}" class="max-h-96 w-full object-cover"></div>`;
             }
         }
 
@@ -255,39 +229,18 @@
             if (!error) { alert('お知らせを更新しました！'); closeAnnounceModal(); await fetchAnnouncement(); }
         }
 
-        // 🧭 タブ切り替えロジックのアップデート
         async function switchTab(tabName, updateHash = true) {
             if ((tabName === 'follow' || tabName === 'notification' || tabName === 'mypage') && !currentUser) { 
-                alert('ログインが必要です'); 
-                switchTab('latest', true); 
-                return; 
+                alert('ログインが必要です'); switchTab('latest', true); return; 
             }
-
             currentTab = tabName;
-            const tabs = { 
-                latest: document.getElementById('tabLatest'), 
-                recommend: document.getElementById('tabRecommend'), 
-                follow: document.getElementById('tabFollow'), 
-                notification: document.getElementById('tabNotification'),
-                mypage: document.getElementById('tabMyPage')
-            };
-            
-            Object.keys(tabs).forEach(k => { 
-                tabs[k].className = (k === tabName) ? "flex flex-col items-center text-green-600 font-bold text-xs w-1/5 relative" : "flex flex-col items-center text-gray-400 font-bold text-xs w-1/5 relative"; 
-            });
-
+            const tabs = { latest: document.getElementById('tabLatest'), recommend: document.getElementById('tabRecommend'), follow: document.getElementById('tabFollow'), notification: document.getElementById('tabNotification'), mypage: document.getElementById('tabMyPage') };
+            Object.keys(tabs).forEach(k => { tabs[k].className = (k === tabName) ? "flex flex-col items-center text-green-600 font-bold text-xs w-1/5 relative" : "flex flex-col items-center text-gray-400 font-bold text-xs w-1/5 relative"; });
             if (updateHash) {
                 if (tabName === 'mypage') window.history.pushState(null, null, '#/mypage');
                 else if (window.location.hash === '#/mypage' || window.location.hash.startsWith('#/post/') || window.location.hash.startsWith('#/user/')) window.history.pushState(null, null, ' ');
             }
-
-            if (tabName === 'notification') { 
-                await renderNotificationsList(); 
-            } else if (tabName === 'mypage') {
-                await renderMyPage();
-            } else { 
-                await fetchAndRenderPosts(); 
-            }
+            if (tabName === 'notification') { await renderNotificationsList(); } else if (tabName === 'mypage') { await renderMyPage(); } else { await fetchAndRenderPosts(); }
         }
 
         async function execSearch() {
@@ -308,6 +261,7 @@
             formatted = formatted.replace(/@([A-Za-z0-9_ぁ-んァ-ヶー一-龠々]+)/g, (match, username) => {
                 return `<span class="text-blue-600 font-bold cursor-pointer hover:underline" onclick="clickMention('${username}')">${match}</span>`;
             });
+            formatted = formatted.replace(/(https?:\/\/[^\s]+)/g, '<a href="$1" target="_blank" class="text-green-600 hover:underline break-all">$1</a>');
             return formatted;
         }
 
@@ -331,64 +285,46 @@
             });
         }
 
-        // 👤 マイページの描画ロジック（自分専用スペース）
         async function renderMyPage() {
             const timeline = document.getElementById('timeline');
             timeline.innerHTML = '<div class="text-center text-gray-500 py-10">マイページを読み込み中...</div>';
-
-            // 1. 自分のプロフィール情報を取得
             const { data: profile } = await exClient.from('profiles').select('*').eq('id', currentUser.id).single();
             if (!profile) { timeline.innerHTML = '<div class="text-center text-red-500 py-10">プロフィールの取得に失敗しました</div>'; return; }
-
             const avatar = profile.avatar_url || "https://api.dicebear.com/7.x/adventurer/svg?seed=" + profile.username;
             
-            // 2. マイページのヘッダーUIを構築
             let htmlContent = `
                 <div class="bg-gradient-to-br from-green-50 to-white border border-gray-200 rounded-2xl p-6 text-center shadow-sm space-y-4 mb-6">
                     <img src="${avatar}" class="w-24 h-24 rounded-full border-4 border-white mx-auto shadow-md object-cover cursor-pointer hover:opacity-90" onclick="openProfileModal()">
-                    <div>
-                        <h2 class="text-xl font-bold text-gray-800">${profile.username}</h2>
-                        <p class="text-xs text-gray-400 mt-1">ID: ${profile.id.substring(0,8)}...</p>
-                    </div>
-                    <div class="bg-white px-4 py-3 rounded-xl border border-gray-100 text-sm text-gray-600 min-h-[50px] flex items-center justify-center whitespace-pre-wrap">
-                        ${profile.bio || "自己紹介はまだありません。上の「編集」から設定できます！"}
-                    </div>
-                    <button onclick="openProfileModal()" class="bg-white border border-gray-300 text-gray-700 px-4 py-1.5 rounded-full text-xs font-bold hover:bg-gray-50 transition shadow-sm">
-                        <i class="fa-solid fa-user-pen mr-1"></i> プロフィールを編集する
-                    </button>
+                    <div><h2 class="text-xl font-bold text-gray-800">${profile.username}</h2><p class="text-xs text-gray-400 mt-1">ID: ${profile.id.substring(0,8)}...</p></div>
+                    <div class="bg-white px-4 py-3 rounded-xl border border-gray-100 text-sm text-gray-600 min-h-[50px] flex items-center justify-center whitespace-pre-wrap">${profile.bio || "自己紹介はまだありません。上の「編集」から設定できます！"}</div>
+                    <button onclick="openProfileModal()" class="bg-white border border-gray-300 text-gray-700 px-4 py-1.5 rounded-full text-xs font-bold hover:bg-gray-50 transition shadow-sm"><i class="fa-solid fa-user-pen mr-1"></i> プロフィールを編集する</button>
                 </div>
                 <h3 class="text-sm font-bold text-gray-700 border-b pb-2 mb-4"><i class="fa-solid fa-list-ul text-green-600 mr-1"></i> あなたの過去の投稿</h3>
             `;
 
-            // 3. 自分の投稿だけを取得
             const { data: posts, error } = await exClient.from('posts').select(`id, content, media_url, user_id, created_at, profiles ( username, avatar_url )`).eq('user_id', currentUser.id).order('created_at', { ascending: false });
-            
             if (error) { htmlContent += `<div class="text-center text-red-500 py-10">投稿の取得に失敗しました</div>`; timeline.innerHTML = htmlContent; return; }
-            if (!posts || posts.length === 0) { htmlContent += `<div class="text-center text-gray-400 py-10">まだ投稿がありません。上の「投稿」ボタンから呟いてみましょう！</div>`; timeline.innerHTML = htmlContent; return; }
-
+            if (!posts || posts.length === 0) { htmlContent += `<div class="text-center text-gray-400 py-10">まだ投稿がありません。</div>`; timeline.innerHTML = htmlContent; return; }
             timeline.innerHTML = htmlContent;
 
-            // 4. 投稿カードをマイページの下部にレンダリング
             for (const post of posts) {
                 const { count: likeCount } = await exClient.from('likes').select('*', { count: 'exact', head: true }).eq('post_id', post.id);
                 const { count: commentCount } = await exClient.from('comments').select('*', { count: 'exact', head: true }).eq('post_id', post.id);
-                let isLiked = false;
-                const { data: myLike } = await exClient.from('likes').select('id').eq('post_id', post.id).eq('user_id', currentUser.id).maybeSingle();
-                if (myLike) isLiked = true;
+                let isLiked = false; const { data: myLike } = await exClient.from('likes').select('id').eq('post_id', post.id).eq('user_id', currentUser.id).maybeSingle(); if (myLike) isLiked = true;
+
+                const videoEmbedHtml = getYouTubeEmbedHtml(post.content);
 
                 const postCard = document.createElement('div');
                 postCard.id = `post-card-${post.id}`;
                 postCard.className = "bg-white border border-gray-200 rounded-xl overflow-hidden shadow-sm mb-4 transition-all duration-500";
                 postCard.innerHTML = `
                     <div class="flex justify-between items-center p-3">
-                        <div class="flex items-center">
-                            <img src="${avatar}" class="w-10 h-10 rounded-full border mr-3 object-cover">
-                            <span class="font-bold text-gray-800">${profile.username}</span>
-                        </div>
+                        <div class="flex items-center"><img src="${avatar}" class="w-10 h-10 rounded-full border mr-3 object-cover"><span class="font-bold text-gray-800">${profile.username}</span></div>
                         <button onclick="deletePost(${post.id})" class="text-gray-400 hover:text-red-500"><i class="fa-solid fa-trash-can"></i></button>
                     </div>
                     <div class="px-3 pb-3 text-gray-800 text-sm whitespace-pre-wrap">${parseRichText(post.content)}</div>
-                    ${post.media_url ? `<div class="w-full bg-black flex justify-center"><img src="${post.media_url}" class="max-h-96 w-full object-cover"></div>` : ''}
+                    ${videoEmbedHtml}
+                    ${renderMediaAttachment(post.media_url)}
                     <div class="p-3 border-t border-gray-100 flex items-center space-x-6">
                         <button onclick="toggleLike(${post.id}, ${isLiked})" class="flex items-center space-x-1 ${isLiked ? 'text-red-500' : 'text-gray-400'} hover:scale-105 transition"><i class="${isLiked ? 'fa-solid' : 'fa-regular'} fa-heart text-lg"></i><span class="text-xs font-bold">${likeCount || 0}</span></button>
                         <button onclick="openCommentModal(${post.id})" class="flex items-center space-x-1 text-gray-400 hover:text-green-500 transition"><i class="fa-regular fa-comment text-lg"></i><span class="text-xs font-bold">${commentCount || 0}</span></button>
@@ -426,6 +362,9 @@
                 const authorName = post.profiles?.username || "名無しユーザー";
                 const authorAvatar = post.profiles?.avatar_url || "https://api.dicebear.com/7.x/adventurer/svg?seed=" + authorName;
                 const isMyPost = currentUser && currentUser.id === post.user_id;
+
+                const videoEmbedHtml = getYouTubeEmbedHtml(post.content);
+
                 const postCard = document.createElement('div');
                 postCard.id = `post-card-${post.id}`;
                 postCard.className = "bg-white border border-gray-200 rounded-xl overflow-hidden shadow-sm mb-4 transition-all duration-500";
@@ -438,7 +377,8 @@
                         ${isMyPost ? `<button onclick="deletePost(${post.id})" class="text-gray-400 hover:text-red-500"><i class="fa-solid fa-trash-can"></i></button>` : ''}
                     </div>
                     <div class="px-3 pb-3 text-gray-800 text-sm whitespace-pre-wrap">${parseRichText(post.content)}</div>
-                    ${post.media_url ? `<div class="w-full bg-black flex justify-center"><img src="${post.media_url}" class="max-h-96 w-full object-cover"></div>` : ''}
+                    ${videoEmbedHtml}
+                    ${renderMediaAttachment(post.media_url)}
                     <div class="p-3 border-t border-gray-100 flex items-center space-x-6">
                         <button onclick="toggleLike(${post.id}, ${post.isLiked})" class="flex items-center space-x-1 ${post.isLiked ? 'text-red-500' : 'text-gray-400'} hover:scale-105 transition"><i class="${post.isLiked ? 'fa-solid' : 'fa-regular'} fa-heart text-lg"></i><span class="text-xs font-bold">${post.likeCount}</span></button>
                         <button onclick="openCommentModal(${post.id})" class="flex items-center space-x-1 text-gray-400 hover:text-green-500 transition"><i class="fa-regular fa-comment text-lg"></i><span class="text-xs font-bold">${post.commentCount}</span></button>
@@ -448,22 +388,75 @@
             });
         }
 
+        // 📝 投稿処理のアップデート（画像・動画の二者択一型スマート処理）
         async function submitPost() {
-            if (!currentUser) return; const text = document.getElementById('postText').value.trim(); const mediaFileInput = document.getElementById('postMediaFile'); const mediaFile = mediaFileInput.files[0]; let mediaUrl = null; if (!text && !mediaFile) return;
-            if (mediaFile) { const compressedBlob = await compressImage(mediaFile); const fileName = `${currentUser.id}_${Date.now()}.jpg`; await exClient.storage.from('posts').upload(fileName, compressedBlob, { contentType: 'image/jpeg' }); const { data: { publicUrl } } = exClient.storage.from('posts').getPublicUrl(fileName); mediaUrl = publicUrl; }
-            const { data: newPost, error } = await exClient.from('posts').insert([{ user_id: currentUser.id, content: text, media_url: mediaUrl }]).select().single();
-            if (!error && newPost) {
-                const { data: followers } = await exClient.from('follows').select('follower_id').eq('following_id', currentUser.id);
-                if (followers && followers.length > 0) { const notifyRecords = followers.map(f => ({ user_id: f.follower_id, type: 'follow_post', sender_name: myProfileName, source_id: newPost.id })); await exClient.from('notifications').insert(notifyRecords); }
-                const mentionMatches = text.match(/@([A-Za-z0-9_ぁ-んァ-ヶー一-龠々]+)/g);
-                if (mentionMatches) {
-                    for (const match of mentionMatches) {
-                        const targetName = match.replace('@', ''); if (targetName === myProfileName) continue;
-                        const { data: targetUser } = await exClient.from('public_profiles').select('id').eq('username', targetName).maybeSingle();
-                        if (targetUser) { await exClient.from('notifications').insert([{ user_id: targetUser.id, type: 'mention', sender_name: myProfileName, source_id: newPost.id }]); }
+            if (!currentUser) return; 
+            const text = document.getElementById('postText').value.trim(); 
+            const mediaFileInput = document.getElementById('postMediaFile'); 
+            const mediaFile = mediaFileInput.files[0]; 
+            let mediaUrl = null; 
+            
+            if (!text && !mediaFile) return;
+
+            const submitBtn = document.getElementById('realPostSubmitBtn');
+            submitBtn.innerText = "処理中...";
+            submitBtn.disabled = true;
+
+            try {
+                if (mediaFile) {
+                    const isVideoFile = mediaFile.type.startsWith('video/');
+                    const maxVideoSize = 15 * 1024 * 1024; // 15MB制限
+
+                    if (isVideoFile && mediaFile.size > maxVideoSize) {
+                        alert('無料枠維持のため、動画ファイルは15MB以下にしてください。');
+                        submitBtn.innerText = "投稿する";
+                        submitBtn.disabled = false;
+                        return;
+                    }
+
+                    let uploadBlob = mediaFile;
+                    let fileExt = mediaFile.name.split('.').pop();
+                    
+                    // 画像なら圧縮、動画なら無圧縮のまま転送
+                    if (!isVideoFile) {
+                        uploadBlob = await compressImage(mediaFile);
+                        fileExt = "jpg";
+                    }
+
+                    const fileName = `${currentUser.id}_${Date.now()}.${fileExt}`;
+                    
+                    // posts ストレージバケットにそのまま転送 (Supabase側で画像も動画も入るように設定されている前提)
+                    const { error: uploadError } = await exClient.storage.from('posts').upload(fileName, uploadBlob, { 
+                        contentType: mediaFile.type 
+                    });
+
+                    if (uploadError) throw uploadError;
+
+                    const { data: { publicUrl } } = exClient.storage.from('posts').getPublicUrl(fileName);
+                    mediaUrl = publicUrl;
+                }
+
+                const { data: newPost, error } = await exClient.from('posts').insert([{ user_id: currentUser.id, content: text, media_url: mediaUrl }]).select().single();
+                if (!error && newPost) {
+                    const { data: followers } = await exClient.from('follows').select('follower_id').eq('following_id', currentUser.id);
+                    if (followers && followers.length > 0) { const notifyRecords = followers.map(f => ({ user_id: f.follower_id, type: 'follow_post', sender_name: myProfileName, source_id: newPost.id })); await exClient.from('notifications').insert(notifyRecords); }
+                    const mentionMatches = text.match(/@([A-Za-z0-9_ぁ-んァ-ヶー一-龠々]+)/g);
+                    if (mentionMatches) {
+                        for (const match of mentionMatches) {
+                            const targetName = match.replace('@', ''); if (targetName === myProfileName) continue;
+                            const { data: targetUser } = await exClient.from('public_profiles').select('id').eq('username', targetName).maybeSingle();
+                            if (targetUser) { await exClient.from('notifications').insert([{ user_id: targetUser.id, type: 'mention', sender_name: myProfileName, source_id: newPost.id }]); }
+                        }
                     }
                 }
+            } catch (err) {
+                console.error(err);
+                alert('アップロードに失敗しました。');
+            } finally {
+                submitBtn.innerText = "投稿する";
+                submitBtn.disabled = false;
             }
+
             closePostModal(); document.getElementById('postText').value = ''; mediaFileInput.value = ''; 
             if (currentTab === 'mypage') await renderMyPage(); else await fetchAndRenderPosts();
         }
@@ -541,7 +534,7 @@
                     commentDiv.innerHTML = html; listArea.appendChild(commentDiv);
                 }
             }
-            if (currentUser) { formArea.innerHTML = `<div class="flex items-center space-x-2"><input id="modalCommentInput" type="text" placeholder="コメントや @ユーザー名 を入力..." class="border rounded-full px-4 py-2 text-xs w-full outline-none"><button onclick="submitModalComment()" class="text-xs bg-green-500 text-white px-4 py-2 rounded-full font-bold hover:bg-green-600 shrink-0">送信</button></div>`; }
+            if (currentUser) { formArea.innerHTML = `<div class="flex items-center space-x-2"><input id="modalCommentInput" type="text" placeholder="コメントを入力..." class="border rounded-full px-4 py-2 text-xs w-full outline-none"><button onclick="submitModalComment()" class="text-xs bg-green-500 text-white px-4 py-2 rounded-full font-bold hover:bg-green-600 shrink-0">送信</button></div>`; }
             else { formArea.innerHTML = '<p class="text-center text-xs text-gray-400">コメントするにはログインが必要です</p>'; }
         }
 
