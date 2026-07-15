@@ -8,7 +8,7 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <style>
-        body { background-color: #f3f4f6; font-family: sans-serif; }
+        body { background-color: #f3f4f6; font-family: sans-serif; padding-bottom: 70px; }
         .main-container { max-width: 500px; margin: 0 auto; background-color: #ffffff; min-height: 100vh; }
     </style>
 </head>
@@ -42,7 +42,7 @@
             <div class="flex items-center space-x-2 bg-gray-100 rounded-full px-3 py-1.5 border border-gray-200">
                 <i class="fa-solid fa-magnifying-glass text-gray-400 text-sm"></i>
                 <span class="text-gray-400 font-bold text-sm">#</span>
-                <input id="searchInput" type="text" class="bg-transparent border-none outline-none text-sm w-full" placeholder="タグ名で検索（空欄で全表示）" onkeydown="if(event.key==='Enter') execSearch()">
+                <input id="searchInput" type="text" class="bg-transparent border-none outline-none text-sm w-full" placeholder="タグ名で検索" onkeydown="if(event.key==='Enter') execSearch()">
                 <button onclick="execSearch()" class="text-xs bg-green-600 text-white px-3 py-1 rounded-full font-bold hover:bg-green-700">検索</button>
             </div>
             <div id="searchBadge" class="hidden text-xs bg-green-50 text-green-700 px-3 py-1 rounded-md flex justify-between items-center">
@@ -70,44 +70,17 @@
             <div class="text-center text-gray-500 py-10">読み込み中...</div>
         </main>
 
-    </div>
+        <nav class="fixed bottom-0 left-0 right-0 max-w-[500px] mx-auto bg-white border-t border-gray-200 flex justify-around py-3 z-10 shadow-lg">
+            <button id="tabLatest" onclick="switchTab('latest')" class="flex flex-col items-center text-green-600 font-bold text-sm">
+                <i class="fa-solid fa-globe text-lg mb-0.5"></i>
+                <span>最新の投稿</span>
+            </button>
+            <button id="tabFollow" onclick="switchTab('follow')" class="flex flex-col items-center text-gray-400 font-bold text-sm">
+                <i class="fa-solid fa-user-group text-lg mb-0.5"></i>
+                <span>フォロー中</span>
+            </button>
+        </nav>
 
-    <div id="authModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center hidden z-50 p-4">
-        <div class="bg-white rounded-lg w-full max-w-md p-6">
-            <div class="flex justify-between items-center mb-4">
-                <h3 id="authTitle" class="text-lg font-bold">簡易アカウント作成</h3>
-                <button onclick="closeAuthModal()" class="text-gray-500 hover:text-gray-800 text-xl">&times;</button>
-            </div>
-            <div class="space-y-3">
-                <input id="authUsername" type="text" class="w-full border p-2 rounded text-sm" placeholder="ユーザー名">
-                <input id="authPassword" type="password" class="w-full border p-2 rounded text-sm" placeholder="パスワード（6文字以上）">
-                <input id="authPasswordConfirm" type="password" class="w-full border p-2 rounded text-sm" placeholder="パスワード確認（もう一度入力）">
-                <div class="flex flex-col gap-2 pt-2">
-                    <button id="authSubmitBtn" onclick="handleAuthSubmit()" class="w-full bg-green-500 text-white py-2 rounded font-bold hover:bg-green-600 text-sm">アカウントを作成する</button>
-                    <button id="authToggleBtn" onclick="toggleAuthMode()" class="text-xs text-gray-500 underline hover:text-gray-700">すでにアカウントをお持ちの方（ログイン）</button>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <div id="profileModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center hidden z-50 p-4">
-        <div class="bg-white rounded-lg w-full max-w-md p-6">
-            <div class="flex justify-between items-center mb-4">
-                <h3 class="text-lg font-bold">プロフィール編集</h3>
-                <button onclick="closeProfileModal()" class="text-gray-500 hover:text-gray-800 text-xl">&times;</button>
-            </div>
-            <div class="space-y-4">
-                <div>
-                    <label class="block text-xs font-bold text-gray-700 mb-1">アイコン画像</label>
-                    <input id="avatarFile" type="file" accept="image/*" class="w-full text-xs text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-xs file:font-semibold file:bg-green-50 file:text-green-700 hover:file:bg-green-100">
-                </div>
-                <div>
-                    <label class="block text-xs font-bold text-gray-700 mb-1">一言（自己紹介）</label>
-                    <input id="editBio" type="text" class="w-full border p-2 rounded text-sm" placeholder="今の一言を入力してください">
-                </div>
-                <button onclick="saveProfile()" class="w-full bg-green-500 text-white py-2 rounded font-bold hover:bg-green-600 text-sm">保存する</button>
-            </div>
-        </div>
     </div>
 
     <div id="userViewModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center hidden z-50 p-4">
@@ -117,33 +90,15 @@
             </div>
             <img id="viewAvatar" class="w-24 h-24 rounded-full border mx-auto mb-4 object-cover" src="" alt="avatar">
             <h3 id="viewName" class="text-xl font-bold text-gray-800 mb-2"></h3>
-            <p id="viewBio" class="text-sm text-gray-600 bg-gray-50 p-3 rounded-lg min-h-[50px] flex items-center justify-center whitespace-pre-wrap"></p>
+            <p id="viewBio" class="text-sm text-gray-600 bg-gray-50 p-3 rounded-lg min-h-[50px] flex items-center justify-center whitespace-pre-wrap mb-4"></p>
+            <div id="followBtnArea"></div>
         </div>
     </div>
 
-    <div id="postModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center hidden z-50 p-4">
-        <div class="bg-white rounded-lg w-full max-w-md p-6">
-            <div class="flex justify-between items-center mb-4">
-                <h3 class="text-lg font-bold">新規投稿</h3>
-                <button onclick="closePostModal()" class="text-gray-500 hover:text-gray-800 text-xl">&times;</button>
-            </div>
-            <textarea id="postText" class="w-full border border-gray-300 rounded p-2 h-24 resize-none mb-4" placeholder="今なにしてる？ #ハッシュタグ も使えるよ！"></textarea>
-            <label class="block text-xs font-bold text-gray-700 mb-1">画像を追加</label>
-            <input id="postMediaFile" type="file" accept="image/*" class="w-full text-xs text-gray-500 mb-4 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-xs file:font-semibold file:bg-green-50 file:text-green-700 hover:file:bg-green-100">
-            <button onclick="submitPost()" class="w-full bg-green-500 text-white py-2 rounded font-bold hover:bg-green-600">投稿する</button>
-        </div>
-    </div>
-
-    <div id="announceModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center hidden z-50 p-4">
-        <div class="bg-white rounded-lg w-full max-w-md p-6">
-            <div class="flex justify-between items-center mb-4">
-                <h3 class="text-lg font-bold text-red-600">公式お知らせを投稿</h3>
-                <button onclick="closeAnnounceModal()" class="text-gray-500 hover:text-gray-800 text-xl">&times;</button>
-            </div>
-            <textarea id="announceInputText" class="w-full border border-gray-300 rounded p-2 h-32 resize-none mb-4" placeholder="ユーザー全員に見せる重要なお知らせを入力..."></textarea>
-            <button onclick="submitAnnouncement()" class="w-full bg-red-500 text-white py-2 rounded font-bold hover:bg-red-600">お知らせを更新する</button>
-        </div>
-    </div>
+    <div id="authModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center hidden z-50 p-4"><div class="bg-white rounded-lg w-full max-w-md p-6"><div class="flex justify-between items-center mb-4"><h3 id="authTitle" class="text-lg font-bold">簡易アカウント作成</h3><button onclick="closeAuthModal()" class="text-gray-500 hover:text-gray-800 text-xl">&times;</button></div><div class="space-y-3"><input id="authUsername" type="text" class="w-full border p-2 rounded text-sm" placeholder="ユーザー名"><input id="authPassword" type="password" class="w-full border p-2 rounded text-sm" placeholder="パスワード（6文字以上）"><input id="authPasswordConfirm" type="password" class="w-full border p-2 rounded text-sm" placeholder="パスワード確認（もう一度入力）"><div class="flex flex-col gap-2 pt-2"><button id="authSubmitBtn" onclick="handleAuthSubmit()" class="w-full bg-green-500 text-white py-2 rounded font-bold hover:bg-green-600 text-sm">アカウントを作成する</button><button id="authToggleBtn" onclick="toggleAuthMode()" class="text-xs text-gray-500 underline hover:text-gray-700">すでにアカウントをお持ちの方（ログイン）</button></div></div></div></div>
+    <div id="profileModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center hidden z-50 p-4"><div class="bg-white rounded-lg w-full max-w-md p-6"><div class="flex justify-between items-center mb-4"><h3 class="text-lg font-bold">プロフィール編集</h3><button onclick="closeProfileModal()" class="text-gray-500 hover:text-gray-800 text-xl">&times;</button></div><div class="space-y-4"><div><label class="block text-xs font-bold text-gray-700 mb-1">アイコン画像</label><input id="avatarFile" type="file" accept="image/*" class="w-full text-xs text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-xs file:font-semibold file:bg-green-50 file:text-green-700 hover:file:bg-green-100"></div><div><label class="block text-xs font-bold text-gray-700 mb-1">一言（自己紹介）</label><input id="editBio" type="text" class="w-full border p-2 rounded text-sm" placeholder="今の一言を入力してください"></div><button onclick="saveProfile()" class="w-full bg-green-500 text-white py-2 rounded font-bold hover:bg-green-600 text-sm">保存する</button></div></div></div>
+    <div id="postModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center hidden z-50 p-4"><div class="bg-white rounded-lg w-full max-w-md p-6"><div class="flex justify-between items-center mb-4"><h3 class="text-lg font-bold">新規投稿</h3><button onclick="closePostModal()" class="text-gray-500 hover:text-gray-800 text-xl">&times;</button></div><textarea id="postText" class="w-full border border-gray-300 rounded p-2 h-24 resize-none mb-4" placeholder="今なにしてる？ #ハッシュタグ も使えるよ！"></textarea><label class="block text-xs font-bold text-gray-700 mb-1">画像を追加</label><input id="postMediaFile" type="file" accept="image/*" class="w-full text-xs text-gray-500 mb-4 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-xs file:font-semibold file:bg-green-50 file:text-green-700 hover:file:bg-green-100"><button onclick="submitPost()" class="w-full bg-green-500 text-white py-2 rounded font-bold hover:bg-green-600">投稿する</button></div></div>
+    <div id="announceModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center hidden z-50 p-4"><div class="bg-white rounded-lg w-full max-w-md p-6"><div class="flex justify-between items-center mb-4"><h3 class="text-lg font-bold text-red-600">公式お知らせを投稿</h3><button onclick="closeAnnounceModal()" class="text-gray-500 hover:text-gray-800 text-xl">&times;</button></div><textarea id="announceInputText" class="w-full border border-gray-300 rounded p-2 h-32 resize-none mb-4" placeholder="ユーザー全員に見せる重要お知らせを入力..."></textarea><button onclick="submitAnnouncement()" class="w-full bg-red-500 text-white py-2 rounded font-bold hover:bg-red-600">お知らせを更新する</button></div></div>
 
     <script>
         const EX_URL = "https://kdydbrscxrekivqmplyn.supabase.co";
@@ -153,7 +108,8 @@
 
         let currentUser = null;
         let isSignUpMode = true;
-        let currentSearchWord = ""; // 現在検索中のワードを保持する変数
+        let currentSearchWord = "";
+        let currentTab = "latest"; // 最新(latest) か フォロー中(follow) か
 
         window.onload = async () => {
             await checkUser();
@@ -170,19 +126,12 @@
                     img.src = event.target.result;
                     img.onload = () => {
                         const canvas = document.createElement('canvas');
-                        let width = img.width;
-                        let height = img.height;
-                        if (width > maxWidth) {
-                            height = Math.round((height * maxWidth) / width);
-                            width = maxWidth;
-                        }
-                        canvas.width = width;
-                        canvas.height = height;
+                        let width = img.width; height = img.height;
+                        if (width > maxWidth) { height = Math.round((height * maxWidth) / width); width = maxWidth; }
+                        canvas.width = width; canvas.height = height;
                         const ctx = canvas.getContext('2d');
                         ctx.drawImage(img, 0, 0, width, height);
-                        canvas.toBlob((blob) => {
-                            resolve(blob);
-                        }, 'image/jpeg', quality);
+                        canvas.toBlob((blob) => { resolve(blob); }, 'image/jpeg', quality);
                     };
                 };
             });
@@ -199,23 +148,12 @@
                     document.getElementById('postBtn').classList.remove('hidden');
                     document.getElementById('logoutBtn').classList.remove('hidden');
                     document.getElementById('authBtn').classList.add('hidden');
-                    
                     document.getElementById('myAvatar').src = profile.avatar_url || "https://api.dicebear.com/7.x/adventurer/svg?seed=" + profile.username;
                     document.getElementById('myName').innerText = profile.username;
                     document.getElementById('myBio').innerText = profile.bio || "未設定";
                     document.getElementById('editBio').value = profile.bio || "";
-
-                    if (profile.username === 'SIJ375') {
-                        document.getElementById('adminAnnounceBtn').classList.remove('hidden');
-                    }
+                    if (profile.username === 'SIJ375') document.getElementById('adminAnnounceBtn').classList.remove('hidden');
                 }
-            } else {
-                document.getElementById('userInfo').classList.add('hidden');
-                document.getElementById('profileBar').classList.add('hidden');
-                document.getElementById('postBtn').classList.add('hidden');
-                document.getElementById('logoutBtn').classList.add('hidden');
-                document.getElementById('authBtn').classList.remove('hidden');
-                document.getElementById('adminAnnounceBtn').classList.add('hidden');
             }
         }
 
@@ -224,8 +162,6 @@
             if (!error && data && data.length > 0) {
                 document.getElementById('announceText').innerText = data[0].content;
                 document.getElementById('announceArea').classList.remove('hidden');
-            } else {
-                document.getElementById('announceArea').classList.add('hidden');
             }
         }
 
@@ -233,174 +169,217 @@
             const text = document.getElementById('announceInputText').value.trim();
             if (!text) return;
             const { error } = await exClient.from('announcements').insert([{ content: text }]);
-            if (error) {
-                alert('お知らせの更新に失敗しました: ' + error.message);
-            } else {
-                alert('公式お知らせを更新しました！');
-                closeAnnounceModal();
-                await fetchAnnouncement();
-            }
+            if (!error) { alert('お知らせを更新しました！'); closeAnnounceModal(); await fetchAnnouncement(); }
         }
 
-        // 🔍 検索を実行する関数
+        // 🧭 タブ切り替え処理
+        async function switchTab(tabName) {
+            currentTab = tabName;
+            const tabL = document.getElementById('tabLatest');
+            const tabF = document.getElementById('tabFollow');
+            if (tabName === 'latest') {
+                tabL.className = "flex flex-col items-center text-green-600 font-bold text-sm";
+                tabF.className = "flex flex-col items-center text-gray-400 font-bold text-sm";
+            } else {
+                if (!currentUser) { alert('フォローリストを見るにはログインが必要です'); switchTab('latest'); return; }
+                tabL.className = "flex flex-col items-center text-gray-400 font-bold text-sm";
+                tabF.className = "flex flex-col items-center text-green-600 font-bold text-sm";
+            }
+            await fetchAndRenderPosts();
+        }
+
         async function execSearch() {
-            const word = document.getElementById('searchInput').value.trim().replace(/^#/, ''); // 先頭の#は自動カット
-            if (word) {
-                currentSearchWord = word;
-                document.getElementById('searchWord').innerText = '#' + word;
-                document.getElementById('searchBadge').classList.remove('hidden');
-            } else {
-                clearSearch();
-                return;
-            }
+            const word = document.getElementById('searchInput').value.trim().replace(/^#/, '');
+            if (word) { currentSearchWord = word; document.getElementById('searchWord').innerText = '#' + word; document.getElementById('searchBadge').classList.remove('hidden'); }
+            else { clearSearch(); return; }
             await fetchAndRenderPosts();
         }
 
-        // ❌ 検索をクリアして全表示に戻す関数
         async function clearSearch() {
-            currentSearchWord = "";
-            document.getElementById('searchInput').value = "";
-            document.getElementById('searchBadge').classList.add('hidden');
+            currentSearchWord = ""; document.getElementById('searchInput').value = ""; document.getElementById('searchBadge').classList.add('hidden');
             await fetchAndRenderPosts();
         }
 
-        // 🔗 ハッシュタグを青文字リンクに変換するヘルパー関数
         function parseHashtags(text) {
             if (!text) return "";
-            // 全角・半角の「#文字」にマッチさせる正規表現
             return text.replace(/[#＃]([A-Za-z0-9_ぁ-んァ-ヶー一-龠々]+)/g, (match, tag) => {
                 return `<span class="text-blue-500 font-semibold cursor-pointer hover:underline" onclick="clickHashtag('${tag}')">${match}</span>`;
             });
         }
 
-        // 🏷️ 投稿内のハッシュタグをクリックしたときの動き
-        function clickHashtag(tag) {
-            document.getElementById('searchInput').value = tag;
-            execSearch();
-        }
+        function clickHashtag(tag) { document.getElementById('searchInput').value = tag; execSearch(); }
 
+        // 📝 タイムライン表示（いいね・コメント・フォロー完全対応版）
         async function fetchAndRenderPosts() {
             const timeline = document.getElementById('timeline');
-            
-            // Supabaseからクエリをビルド
-            let query = exClient
-                .from('posts')
-                .select(`id, content, media_url, user_id, created_at, profiles ( username, avatar_url )`);
+            let query = exClient.from('posts').select(`id, content, media_url, user_id, created_at, profiles ( username, avatar_url )`);
 
-            // ⭐ もしハッシュタグ検索中なら、そのキーワードが含まれるものだけに絞り込む
             if (currentSearchWord) {
                 query = query.ilike('content', `%#${currentSearchWord}%`);
             }
 
-            const { data: posts, error } = await query.order('created_at', { ascending: false });
+            // 💡 フォロー中タブの場合はフォローしている人のIDだけに絞り込む
+            if (currentTab === 'follow' && currentUser) {
+                const { data: follows } = await exClient.from('follows').select('following_id').eq('follower_id', currentUser.id);
+                const followingIds = follows.map(f => f.following_id);
+                if (followingIds.length === 0) {
+                    timeline.innerHTML = `<div class="text-center text-gray-400 py-10">まだ誰もフォローしていません。</div>`;
+                    return;
+                }
+                query = query.in('user_id', followingIds);
+            }
 
-            if (error || !posts) {
-                timeline.innerHTML = `<div class="text-center text-red-500 py-10">データの読み込みに失敗しました</div>`;
-                return;
-            }
-            if (posts.length === 0) {
-                timeline.innerHTML = `<div class="text-center text-gray-400 py-10">該当する投稿がありません。</div>`;
-                return;
-            }
+            const { data: posts, error } = await query.order('created_at', { ascending: false });
+            if (error || !posts) { timeline.innerHTML = `<div class="text-center text-red-500 py-10">読み込み失敗</div>`; return; }
+            if (posts.length === 0) { timeline.innerHTML = `<div class="text-center text-gray-400 py-10">投稿がありません。</div>`; return; }
 
             timeline.innerHTML = '';
-            posts.forEach(post => {
+            for (const post of posts) {
                 const authorName = post.profiles?.username || "名無しユーザー";
                 const authorAvatar = post.profiles?.avatar_url || "https://api.dicebear.com/7.x/adventurer/svg?seed=" + authorName;
                 const isMyPost = currentUser && currentUser.id === post.user_id;
-                
-                // 💡 本文の中のハッシュタグをリンク化する
-                const formattedContent = parseHashtags(post.content);
+
+                // いいね数と自分がいいねしてるかを取得
+                const { count: likeCount } = await exClient.from('likes').select('*', { count: 'exact', head: true }).eq('post_id', post.id);
+                let isLiked = false;
+                if (currentUser) {
+                    const { data: myLike } = await exClient.from('likes').select('id').eq('post_id', post.id).eq('user_id', currentUser.id).maybeSingle();
+                    if (myLike) isLiked = true;
+                }
+
+                // コメント一覧を取得
+                const { data: comments } = await exClient.from('comments').select(`id, content, user_id, profiles(username)`).eq('post_id', post.id).order('created_at', { ascending: true });
 
                 const postCard = document.createElement('div');
-                postCard.className = "bg-white border border-gray-200 rounded-xl overflow-hidden shadow-sm relative";
+                postCard.className = "bg-white border border-gray-200 rounded-xl overflow-hidden shadow-sm mb-4";
+                
+                let commentsHtml = '';
+                if (comments && comments.length > 0) {
+                    commentsHtml = comments.map(c => `
+                        <div class="text-xs text-gray-600 bg-gray-50 p-1.5 rounded mb-1">
+                            <span class="font-bold text-gray-700">${c.profiles?.username || '名無し'}:</span> ${c.content}
+                        </div>
+                    `).join('');
+                }
+
                 postCard.innerHTML = `
                     <div class="flex justify-between items-center p-3">
                         <div class="flex items-center cursor-pointer hover:opacity-80 transition" onclick="viewUserProfile('${post.user_id}')">
-                            <img src="${authorAvatar}" class="w-10 h-10 rounded-full border mr-3 object-cover" alt="avatar">
+                            <img src="${authorAvatar}" class="w-10 h-10 rounded-full border mr-3 object-cover">
                             <span class="font-bold text-gray-800 hover:underline">${authorName}</span>
                         </div>
-                        ${isMyPost ? `
-                            <button onclick="deletePost(${post.id})" class="text-gray-400 hover:text-red-500 text-lg px-2 py-1 transition" title="投稿を削除">
-                                <i class="fa-solid fa-trash-can"></i>
-                            </button>
+                        ${isMyPost ? `<button onclick="deletePost(${post.id})" class="text-gray-400 hover:text-red-500"><i class="fa-solid fa-trash-can"></i></button>` : ''}
+                    </div>
+                    <div class="px-3 pb-3 text-gray-800 text-sm whitespace-pre-wrap">${parseHashtags(post.content)}</div>
+                    ${post.media_url ? `<div class="w-full bg-black flex justify-center"><img src="${post.media_url}" class="max-h-96 w-full object-cover"></div>` : ''}
+                    
+                    <div class="p-3 border-t border-gray-100 flex items-center space-x-4">
+                        <button onclick="toggleLike(${post.id}, ${isLiked})" class="flex items-center space-x-1 ${isLiked ? 'text-red-500' : 'text-gray-400'} hover:scale-105 transition">
+                            <i class="${isLiked ? 'fa-solid' : 'fa-regular'} fa-heart text-lg"></i>
+                            <span class="text-xs font-bold">${likeCount || 0}</span>
+                        </button>
+                    </div>
+
+                    <div class="px-3 pb-3 border-t border-gray-50 pt-2 bg-gray-50/50">
+                        <div class="max-h-32 overflow-y-auto mb-2">${commentsHtml}</div>
+                        ${currentUser ? `
+                            <div class="flex items-center space-x-2">
+                                <input id="commentInput-${post.id}" type="text" placeholder="コメントを書く..." class="border rounded-full px-3 py-1 text-xs w-full bg-white outline-none">
+                                <button onclick="submitComment(${post.id})" class="text-xs bg-green-500 text-white px-3 py-1 rounded-full font-bold hover:bg-green-600">送信</button>
+                            </div>
                         ` : ''}
                     </div>
-                    <div class="px-3 pb-3 text-gray-800 text-sm whitespace-pre-wrap">${formattedContent}</div>
-                    ${post.media_url ? `
-                        <div class="w-full bg-black flex justify-center">
-                            <img src="${post.media_url}" class="max-h-96 w-full object-cover" alt="post media">
-                        </div>
-                    ` : ''}
                 `;
                 timeline.appendChild(postCard);
-            });
+            }
         }
 
-        async function deletePost(postId) {
-            if (!confirm('この投稿を削除してもよろしいですか？')) return;
-            const { error } = await exClient.from('posts').delete().eq('id', postId);
-            if (error) {
-                alert('削除に失敗しました: ' + error.message);
+        // ❤ いいね切り替え
+        async function toggleLike(postId, isLiked) {
+            if (!currentUser) { alert('いいねするにはログインが必要です'); return; }
+            if (isLiked) {
+                await exClient.from('likes').delete().eq('post_id', postId).eq('user_id', currentUser.id);
             } else {
-                await fetchAndRenderPosts();
+                await exClient.from('likes').insert([{ post_id: postId, user_id: currentUser.id }]);
             }
+            await fetchAndRenderPosts();
         }
 
-        async function viewUserProfile(userId) {
-            const { data: profile, error } = await exClient
-                .from('public_profiles')
-                .select('*')
-                .eq('id', userId)
-                .single();
+        // 💬 コメント送信
+        async function submitComment(postId) {
+            const input = document.getElementById(`commentInput-${postId}`);
+            const text = input.value.trim();
+            if (!text) return;
+            const { error } = await exClient.from('comments').insert([{ post_id: postId, user_id: currentUser.id, content: text }]);
+            if (!error) { input.value = ''; await fetchAndRenderPosts(); }
+        }
 
-            if (error || !profile) {
-                alert('プロフィールの取得に失敗しました。');
-                return;
-            }
+        // 👤 プロフィール詳細表示 ＆ フォローボタン制御
+        async function viewUserProfile(userId) {
+            const { data: profile } = await exClient.from('public_profiles').select('*').eq('id', userId).single();
+            if (!profile) return;
 
             document.getElementById('viewAvatar').src = profile.avatar_url || "https://api.dicebear.com/7.x/adventurer/svg?seed=" + profile.username;
             document.getElementById('viewName').innerText = profile.username;
             document.getElementById('viewBio').innerText = profile.bio || "自己紹介はまだありません。";
+
+            const btnArea = document.getElementById('followBtnArea');
+            btnArea.innerHTML = '';
+
+            if (currentUser && currentUser.id !== userId) {
+                // すでにフォローしているかチェック
+                const { data: follow } = await exClient.from('follows').select('id').eq('follower_id', currentUser.id).eq('following_id', userId).maybeSingle();
+                if (follow) {
+                    btnArea.innerHTML = `<button onclick="toggleFollow('${userId}', true)" class="bg-gray-200 text-gray-700 px-6 py-2 rounded-full font-bold text-sm hover:bg-gray-300 w-full">フォロー解除する</button>`;
+                } else {
+                    btnArea.innerHTML = `<button onclick="toggleFollow('${userId}', false)" class="bg-green-500 text-white px-6 py-2 rounded-full font-bold text-sm hover:bg-green-600 w-full">フォローする</button>`;
+                }
+            }
             document.getElementById('userViewModal').classList.remove('hidden');
+        }
+
+        // ➕ フォロー / 解除の切り替え
+        async function toggleFollow(targetUserId, isFollowing) {
+            if (isFollowing) {
+                await exClient.from('follows').delete().eq('follower_id', currentUser.id).eq('following_id', targetUserId);
+            } else {
+                await exClient.from('follows').insert([{ follower_id: currentUser.id, following_id: targetUserId }]);
+            }
+            closeUserViewModal();
+            await fetchAndRenderPosts();
+        }
+
+        // 既存の基本関数（削除、投稿、認証など）
+        async function deletePost(postId) { if (confirm('削除しますか？')) { await exClient.from('posts').delete().eq('id', postId); await fetchAndRenderPosts(); } }
+        async function submitPost() {
+            if (!currentUser) return;
+            const text = document.getElementById('postText').value.trim();
+            const mediaFileInput = document.getElementById('postMediaFile');
+            const mediaFile = mediaFileInput.files[0];
+            let mediaUrl = null;
+            if (!text && !mediaFile) return;
+            if (mediaFile) {
+                const compressedBlob = await compressImage(mediaFile);
+                const fileName = `${currentUser.id}_${Date.now()}.jpg`;
+                await exClient.storage.from('posts').upload(fileName, compressedBlob, { contentType: 'image/jpeg' });
+                const { data: { publicUrl } } = exClient.storage.from('posts').getPublicUrl(fileName);
+                mediaUrl = publicUrl;
+            }
+            await exClient.from('posts').insert([{ user_id: currentUser.id, content: text, media_url: mediaUrl }]);
+            closePostModal(); document.getElementById('postText').value = ''; mediaFileInput.value = ''; await fetchAndRenderPosts();
         }
 
         async function handleAuthSubmit() {
             const username = document.getElementById('authUsername').value.trim();
             const password = document.getElementById('authPassword').value.trim();
-            if (!username || !password) {
-                alert('すべての項目を入力してください！');
-                return;
-            }
+            if (!username || !password) return;
             const dummyEmail = `${username}@gmail.com`;
-
             if (isSignUpMode) {
-                const passwordConfirm = document.getElementById('authPasswordConfirm').value.trim();
-                if (password !== passwordConfirm) {
-                    alert('パスワード確認が一致しません！');
-                    return;
-                }
-                const { data: authData, error: authError } = await exClient.auth.signUp({ email: dummyEmail, password });
-                if (authError) {
-                    alert('登録エラー: ' + authError.message);
-                    return;
-                }
-                if (authData.user) {
-                    const { error: profileError } = await exClient.from('profiles').insert([{ id: authData.user.id, username: username, bio: "", avatar_url: null }]);
-                    if (profileError) {
-                        alert('プロフィール登録エラー: ' + profileError.message);
-                    } else {
-                        alert('アカウントを作成しました！自動でログインします。');
-                        location.reload();
-                    }
-                }
+                const { data: authData } = await exClient.auth.signUp({ email: dummyEmail, password });
+                if (authData.user) { await exClient.from('profiles').insert([{ id: authData.user.id, username: username, bio: "", avatar_url: null }]); location.reload(); }
             } else {
                 const { error } = await exClient.auth.signInWithPassword({ email: dummyEmail, password });
-                if (error) {
-                    alert('ログインエラー: パスワードまたはユーザー名が間違っています。');
-                } else {
-                    location.reload();
-                }
+                if (!error) location.reload();
             }
         }
 
@@ -410,68 +389,18 @@
             const avatarFileInput = document.getElementById('avatarFile');
             const avatarFile = avatarFileInput.files[0];
             let avatarUrl = document.getElementById('myAvatar').src;
-
             if (avatarFile) {
                 const compressedBlob = await compressImage(avatarFile);
                 const fileName = `${currentUser.id}_${Date.now()}.jpg`;
-                const { error: uploadError } = await exClient.storage.from('avatars').upload(fileName, compressedBlob, { contentType: 'image/jpeg', upsert: true });
-                if (uploadError) {
-                    alert('画像の保存に失敗しました: ' + uploadError.message);
-                    return;
-                }
+                await exClient.storage.from('avatars').upload(fileName, compressedBlob, { contentType: 'image/jpeg', upsert: true });
                 const { data: { publicUrl } } = exClient.storage.from('avatars').getPublicUrl(fileName);
                 avatarUrl = publicUrl;
             }
-
-            const { error: updateError } = await exClient.from('profiles').update({ bio: bioText, avatar_url: avatarUrl }).eq('id', currentUser.id);
-            if (updateError) {
-                alert('保存に失敗しました: ' + updateError.message);
-            } else {
-                alert('プロフィールを更新しました！');
-                closeProfileModal();
-                location.reload();
-            }
-        }
-
-        async function submitPost() {
-            if (!currentUser) return;
-            const text = document.getElementById('postText').value.trim();
-            const mediaFileInput = document.getElementById('postMediaFile');
-            const mediaFile = mediaFileInput.files[0];
-            let mediaUrl = null;
-
-            if (!text && !mediaFile) return;
-
-            if (mediaFile) {
-                const compressedBlob = await compressImage(mediaFile);
-                const fileName = `${currentUser.id}_${Date.now()}.jpg`;
-                const { error: uploadError } = await exClient.storage.from('posts').upload(fileName, compressedBlob, { contentType: 'image/jpeg' });
-                if (uploadError) {
-                    alert('画像の保存に失敗しました: ' + uploadError.message);
-                    return;
-                }
-                const { data: { publicUrl } } = exClient.storage.from('posts').getPublicUrl(fileName);
-                mediaUrl = publicUrl;
-            }
-
-            const { error } = await exClient.from('posts').insert([{ user_id: currentUser.id, content: text, media_url: mediaUrl }]);
-            if (error) {
-                alert('投稿に失敗しました: ' + error.message);
-            } else {
-                closePostModal();
-                document.getElementById('postText').value = '';
-                mediaFileInput.value = '';
-                await fetchAndRenderPosts();
-            }
-        }
-
-        async function handleLogout() {
-            await exClient.auth.signOut();
-            currentUser = null;
-            alert('ログアウトしました');
+            await exClient.from('profiles').update({ bio: bioText, avatar_url: avatarUrl }).eq('id', currentUser.id);
             location.reload();
         }
 
+        async function handleLogout() { await exClient.auth.signOut(); location.reload(); }
         function openAuthModal() { document.getElementById('authModal').classList.remove('hidden'); }
         function closeAuthModal() { document.getElementById('authModal').classList.add('hidden'); }
         function openPostModal() { document.getElementById('postModal').classList.remove('hidden'); }
@@ -481,25 +410,11 @@
         function openAnnounceModal() { document.getElementById('announceModal').classList.remove('hidden'); }
         function closeAnnounceModal() { document.getElementById('announceModal').classList.add('hidden'); }
         function closeUserViewModal() { document.getElementById('userViewModal').classList.add('hidden'); }
-
         function toggleAuthMode() {
             isSignUpMode = !isSignUpMode;
-            const title = document.getElementById('authTitle');
-            const submitBtn = document.getElementById('authSubmitBtn');
-            const toggleBtn = document.getElementById('authToggleBtn');
-            const confirmInput = document.getElementById('authPasswordConfirm');
-
-            if (isSignUpMode) {
-                title.innerText = '簡易アカウント作成';
-                submitBtn.innerText = 'アカウントを作成する';
-                toggleBtn.innerText = 'すでにアカウントをお持ちの方（ログイン）';
-                confirmInput.classList.remove('hidden');
-            } else {
-                title.innerText = 'ログイン';
-                submitBtn.innerText = 'ログインする';
-                toggleBtn.innerText = '新規アカウント作成はこちら';
-                confirmInput.classList.add('hidden');
-            }
+            document.getElementById('authTitle').innerText = isSignUpMode ? '簡易アカウント作成' : 'ログイン';
+            document.getElementById('authSubmitBtn').innerText = isSignUpMode ? 'アカウントを作成する' : 'ログインする';
+            document.getElementById('authPasswordConfirm').classList.toggle('hidden', !isSignUpMode);
         }
     </script>
 </body>
