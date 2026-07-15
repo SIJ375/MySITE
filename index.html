@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>VOOM Clone with Account</title>
+    <title>SIJ!コミュニティ</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
@@ -17,7 +17,7 @@
     <div class="main-container shadow-lg flex flex-col min-h-screen">
         
         <header class="sticky top-0 bg-white border-b border-gray-200 p-4 flex justify-between items-center z-10">
-            <h1 class="text-xl font-bold text-green-600">VOOM Clone</h1>
+            <h1 class="text-xl font-bold text-green-600">SIJ!コミュニティ</h1>
             <div class="flex items-center space-x-2">
                 <div id="userInfo" class="hidden flex items-center space-x-2">
                     <img id="myAvatar" class="w-8 h-8 rounded-full border" src="" alt="my avatar">
@@ -82,7 +82,7 @@
 
     <script>
         // ==========================================
-        // 【超重要】例のキーをここに貼り付けます！
+        // 【重要】例のキーをここに貼り付けてください！
         // ==========================================
         const EX_URL = "https://あなたのプロジェクトID.supabase.co";
         const EX_KEY = "あなたのanonキー";
@@ -93,7 +93,6 @@
         let currentUser = null;
         let isSignUpMode = true;
 
-        // 起動時にログイン状態のチェックと投稿の読み込みを行う
         window.onload = async () => {
             checkUser();
             fetchAndRenderPosts();
@@ -105,7 +104,6 @@
             if (user) {
                 currentUser = user;
                 
-                // ユーザーのプロフィール情報を「例の場所」から持ってくる
                 const { data: profile } = await exClient
                     .from('profiles')
                     .select('*')
@@ -125,11 +123,10 @@
             }
         }
 
-        // 投稿一覧を「例の場所」から引っ張ってきて表示する
+        // 投稿一覧を表示する
         async function fetchAndRenderPosts() {
             const timeline = document.getElementById('timeline');
             
-            // 投稿データを最新順に取得（投稿者プロフィールも同時に紐付け）
             const { data: posts, error } = await exClient
                 .from('posts')
                 .select(`
@@ -173,7 +170,6 @@
             const password = document.getElementById('authPassword').value.trim();
 
             if (isSignUpMode) {
-                // アカウント新規作成
                 const username = document.getElementById('profileName').value.trim();
                 const bio = document.getElementById('profileBio').value.trim();
                 const avatar = document.getElementById('profileAvatar').value.trim();
@@ -183,7 +179,6 @@
                     return;
                 }
 
-                // 1. サインアップ
                 const { data: authData, error: authError } = await exClient.auth.signUp({ email, password });
                 if (authError) {
                     alert('登録エラー: ' + authError.message);
@@ -191,7 +186,6 @@
                 }
 
                 if (authData.user) {
-                    // 2. 作成したユーザーIDでプロフィールを「例の場所」に保存
                     const { error: profileError } = await exClient
                         .from('profiles')
                         .insert([{
@@ -209,7 +203,6 @@
                     }
                 }
             } else {
-                // 既存アカウントでログイン
                 const { error } = await exClient.auth.signInWithPassword({ email, password });
                 if (error) {
                     alert('ログインエラー: ' + error.message);
@@ -227,11 +220,10 @@
 
             if (!text && !media) return;
 
-            // 「例の場所」に新規レコードを挿入
             const { error } = await exClient
                 .from('posts')
                 .insert([{
-                    id: Math.floor(Math.random() * 10000000), // 簡易的なランダムID
+                    id: Math.floor(Math.random() * 10000000),
                     user_id: currentUser.id,
                     content: text,
                     media_url: media || null
@@ -245,7 +237,6 @@
             }
         }
 
-        // --- モーダルと切り替えの制御用 ---
         function openAuthModal() { document.getElementById('authModal').classList.remove('hidden'); }
         function closeAuthModal() { document.getElementById('authModal').classList.add('hidden'); }
         function openPostModal() { document.getElementById('postModal').classList.remove('hidden'); }
