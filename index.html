@@ -100,6 +100,11 @@
                         <button onclick="openCommentModal(${post.id})" class="flex items-center space-x-1 text-gray-400 hover:text-green-500 transition"><i class="fa-regular fa-comment text-lg"></i><span class="text-xs font-bold">${commentCount || 0}</span></button>
                         <button onclick="copyPostLink(${post.id})" class="flex items-center space-x-1 text-gray-400 hover:text-blue-500 transition" title="リンクをコピー"><i class="fa-regular fa-share-from-square text-lg"></i><span class="text-xs font-bold">シェア</span></button>
                     </div>
+    <div id="newPostAlert" class="hidden text-center my-3 transition-all duration-300">
+    <button onclick="loadNewPosts()" class="bg-green-500 hover:bg-green-600 text-white text-xs font-bold px-4 py-2 rounded-full shadow-md animate-bounce">
+        <i class="fa-solid fa-arrow-up mr-1"></i> 新しい投稿
+    </button>
+</div>
     
     <script>
         const EX_URL = "https://kdydbrscxrekivqmplyn.supabase.co";
@@ -115,6 +120,10 @@
         
         let activePostIdForComment = null;
         let activeParentCommentId = null;
+        
+        // 🆕 最新の投稿IDを保存する変数と、タイマーのIDを保存する変数
+        let latestPostId = null;
+        let checkNewPostInterval = null;
 
         window.onload = async () => {
             await checkUser();
@@ -124,6 +133,10 @@
                 await checkUnreadNotifications();
                 setInterval(checkUnreadNotifications, 3000);
             }
+            
+            // 🆕 初回読み込み時に最新の投稿IDを記憶し、5秒ごとに新着チェックを開始
+            await initLatestPostId();
+            checkNewPostInterval = setInterval(checkNewPosts, 5000); 
         };
 
         window.onpopstate = async () => { await handleUrlRouting(); };
@@ -438,6 +451,43 @@
                 console.error('コピー失敗: ', err);
                 alert('リンクのコピーに失敗しました。');
             });
+        }
+        // 🆕 初回起動時に最新の投稿IDを取得する関数
+        async function initLatestPostId() {
+            const { data, error } = await exClient.from('posts').select('id').order('created_at', { ascending: false }).limit(1).maybeSingle();
+            if (!error && data) {
+                latestPostId = data.id;
+            }
+        }
+
+        // 🆕 定期的に新しい投稿があるか調べる関数（最新タブの時のみチェック）
+        async function checkNewPosts() {
+            // 最新タブ（latest）かつ 検索中でない場合のみチェックする
+            if (currentTab !== 'latest' || currentSearchWord) return;
+
+            const { data, error } = await exClient.from('posts').select('id').order('created_at', { ascending: false }).limit(1).maybeSingle();
+            
+            if (!error && data && latestPostId) {
+                // DBの最新IDが、保持しているIDより大きければ新しい投稿があると判断
+                if (data.id > latestPostId) {
+                    document.getElementById('newPostAlert').classList.remove('hidden');
+                }
+            }
+        }
+
+        // 🆕 「新しい投稿」ボタンが押された時の処理
+        async function loadNewPosts() {
+            // ボタンを隠す
+            document.getElementById('newPostAlert').classList.add('hidden');
+            
+            // 最新のIDを更新
+            await initLatestPostId();
+            
+            // タイムラインを再読み込み
+            await fetchAndRenderPosts();
+            
+            // 画面を最上部までスムーズにスクロール
+            window.scrollTo({ top: 0, behavior: 'smooth' });
         }
     </script>                                   
 </body>
