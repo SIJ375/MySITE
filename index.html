@@ -82,22 +82,26 @@
         </main>
 
         <nav class="fixed bottom-0 left-0 right-0 max-w-[500px] mx-auto bg-white border-t border-gray-200 flex justify-around py-3 z-10 shadow-lg">
-            <button id="tabLatest" onclick="switchTab('latest')" class="flex flex-col items-center text-green-600 font-bold text-xs w-1/4">
+            <button id="tabLatest" onclick="switchTab('latest')" class="flex flex-col items-center text-green-600 font-bold text-xs w-1/5">
                 <i class="fa-solid fa-globe text-lg mb-0.5"></i>
                 <span>最新</span>
             </button>
-            <button id="tabRecommend" onclick="switchTab('recommend')" class="flex flex-col items-center text-gray-400 font-bold text-xs w-1/4">
+            <button id="tabRecommend" onclick="switchTab('recommend')" class="flex flex-col items-center text-gray-400 font-bold text-xs w-1/5">
                 <i class="fa-solid fa-fire text-lg mb-0.5"></i>
                 <span>おすすめ</span>
             </button>
-            <button id="tabFollow" onclick="switchTab('follow')" class="flex flex-col items-center text-gray-400 font-bold text-xs w-1/4">
+            <button id="tabFollow" onclick="switchTab('follow')" class="flex flex-col items-center text-gray-400 font-bold text-xs w-1/5">
                 <i class="fa-solid fa-user-group text-lg mb-0.5"></i>
-                <span>フォロー中</span>
+                <span>フォロー</span>
             </button>
-            <button id="tabNotification" onclick="switchTab('notification')" class="flex flex-col items-center text-gray-400 font-bold text-xs w-1/4 relative">
+            <button id="tabNotification" onclick="switchTab('notification')" class="flex flex-col items-center text-gray-400 font-bold text-xs w-1/5 relative">
                 <i class="fa-solid fa-bell text-lg mb-0.5"></i>
                 <span>通知</span>
-                <span id="navNotifyBadge" class="hidden absolute top-2 right-6 bg-red-500 text-white rounded-full text-[10px] w-4 h-4 flex items-center justify-center font-bold">0</span>
+                <span id="navNotifyBadge" class="hidden absolute top-2 right-4 bg-red-500 text-white rounded-full text-[10px] w-4 h-4 flex items-center justify-center font-bold">0</span>
+            </button>
+            <button id="tabMyPage" onclick="switchTab('mypage')" class="flex flex-col items-center text-gray-400 font-bold text-xs w-1/5">
+                <i class="fa-solid fa-user text-lg mb-0.5"></i>
+                <span>マイページ</span>
             </button>
         </nav>
 
@@ -159,9 +163,8 @@
         window.onload = async () => {
             await checkUser();
             await fetchAnnouncement();
-            await fetchAndRenderPosts();
             
-            // 🔗 ページ起動時のURL（ハッシュ）ルーティング検知
+            // 🔗 ハッシュルーティング処理の初期化
             await handleUrlRouting();
 
             if (currentUser) {
@@ -170,16 +173,13 @@
             }
         };
 
-        // 🔄 ブラウザの「戻る」「進む」ボタンが押されたのを検知して画面を同期する
         window.onpopstate = async () => {
             await handleUrlRouting();
         };
 
-        // 🔗 URLハッシュを解析して、対応する画面を出す重要ロジック
         async function handleUrlRouting() {
             const hash = window.location.hash;
             
-            // 一旦すべての個別モーダルを閉じる（強制リロード対策）
             document.getElementById('commentModal').classList.add('hidden');
             document.getElementById('userViewModal').classList.add('hidden');
             activePostIdForComment = null;
@@ -190,6 +190,12 @@
             } else if (hash.startsWith('#/user/')) {
                 const userId = hash.replace('#/user/', '');
                 if (userId) await viewUserProfile(userId, false);
+            } else if (hash === '#/mypage') {
+                await switchTab('mypage', false);
+            } else {
+                // 何もなければ現在選択されている通常のタブを表示
+                if (currentTab === 'mypage') currentTab = 'latest';
+                await switchTab(currentTab, false);
             }
         }
 
@@ -249,12 +255,39 @@
             if (!error) { alert('お知らせを更新しました！'); closeAnnounceModal(); await fetchAnnouncement(); }
         }
 
-        async function switchTab(tabName) {
+        // 🧭 タブ切り替えロジックのアップデート
+        async function switchTab(tabName, updateHash = true) {
+            if ((tabName === 'follow' || tabName === 'notification' || tabName === 'mypage') && !currentUser) { 
+                alert('ログインが必要です'); 
+                switchTab('latest', true); 
+                return; 
+            }
+
             currentTab = tabName;
-            const tabs = { latest: document.getElementById('tabLatest'), recommend: document.getElementById('tabRecommend'), follow: document.getElementById('tabFollow'), notification: document.getElementById('tabNotification') };
-            Object.keys(tabs).forEach(k => { tabs[k].className = (k === tabName) ? "flex flex-col items-center text-green-600 font-bold text-xs w-1/4 relative" : "flex flex-col items-center text-gray-400 font-bold text-xs w-1/4 relative"; });
-            if ((tabName === 'follow' || tabName === 'notification') && !currentUser) { alert('ログインが必要です'); switchTab('latest'); return; }
-            if (tabName === 'notification') { await renderNotificationsList(); } else { await fetchAndRenderPosts(); }
+            const tabs = { 
+                latest: document.getElementById('tabLatest'), 
+                recommend: document.getElementById('tabRecommend'), 
+                follow: document.getElementById('tabFollow'), 
+                notification: document.getElementById('tabNotification'),
+                mypage: document.getElementById('tabMyPage')
+            };
+            
+            Object.keys(tabs).forEach(k => { 
+                tabs[k].className = (k === tabName) ? "flex flex-col items-center text-green-600 font-bold text-xs w-1/5 relative" : "flex flex-col items-center text-gray-400 font-bold text-xs w-1/5 relative"; 
+            });
+
+            if (updateHash) {
+                if (tabName === 'mypage') window.history.pushState(null, null, '#/mypage');
+                else if (window.location.hash === '#/mypage' || window.location.hash.startsWith('#/post/') || window.location.hash.startsWith('#/user/')) window.history.pushState(null, null, ' ');
+            }
+
+            if (tabName === 'notification') { 
+                await renderNotificationsList(); 
+            } else if (tabName === 'mypage') {
+                await renderMyPage();
+            } else { 
+                await fetchAndRenderPosts(); 
+            }
         }
 
         async function execSearch() {
@@ -281,8 +314,7 @@
         function clickHashtag(tag) { document.getElementById('searchInput').value = tag; execSearch(); }
         async function clickMention(username) {
             const { data } = await exClient.from('public_profiles').select('id').eq('username', username).maybeSingle();
-            if (data) viewUserProfile(data.id);
-            else alert('ユーザーが見つかりませんでした');
+            if (data) viewUserProfile(data.id); else alert('ユーザーが見つかりませんでした');
         }
 
         async function searchUsers() {
@@ -297,6 +329,73 @@
                 div.innerHTML = `<div class="flex items-center"><img src="${avatar}" class="w-8 h-8 rounded-full border mr-2 object-cover"><span class="font-bold text-sm text-gray-800">${u.username}</span></div><i class="fa-solid fa-chevron-right text-gray-300 text-xs"></i>`;
                 resultsArea.appendChild(div);
             });
+        }
+
+        // 👤 マイページの描画ロジック（自分専用スペース）
+        async function renderMyPage() {
+            const timeline = document.getElementById('timeline');
+            timeline.innerHTML = '<div class="text-center text-gray-500 py-10">マイページを読み込み中...</div>';
+
+            // 1. 自分のプロフィール情報を取得
+            const { data: profile } = await exClient.from('profiles').select('*').eq('id', currentUser.id).single();
+            if (!profile) { timeline.innerHTML = '<div class="text-center text-red-500 py-10">プロフィールの取得に失敗しました</div>'; return; }
+
+            const avatar = profile.avatar_url || "https://api.dicebear.com/7.x/adventurer/svg?seed=" + profile.username;
+            
+            // 2. マイページのヘッダーUIを構築
+            let htmlContent = `
+                <div class="bg-gradient-to-br from-green-50 to-white border border-gray-200 rounded-2xl p-6 text-center shadow-sm space-y-4 mb-6">
+                    <img src="${avatar}" class="w-24 h-24 rounded-full border-4 border-white mx-auto shadow-md object-cover cursor-pointer hover:opacity-90" onclick="openProfileModal()">
+                    <div>
+                        <h2 class="text-xl font-bold text-gray-800">${profile.username}</h2>
+                        <p class="text-xs text-gray-400 mt-1">ID: ${profile.id.substring(0,8)}...</p>
+                    </div>
+                    <div class="bg-white px-4 py-3 rounded-xl border border-gray-100 text-sm text-gray-600 min-h-[50px] flex items-center justify-center whitespace-pre-wrap">
+                        ${profile.bio || "自己紹介はまだありません。上の「編集」から設定できます！"}
+                    </div>
+                    <button onclick="openProfileModal()" class="bg-white border border-gray-300 text-gray-700 px-4 py-1.5 rounded-full text-xs font-bold hover:bg-gray-50 transition shadow-sm">
+                        <i class="fa-solid fa-user-pen mr-1"></i> プロフィールを編集する
+                    </button>
+                </div>
+                <h3 class="text-sm font-bold text-gray-700 border-b pb-2 mb-4"><i class="fa-solid fa-list-ul text-green-600 mr-1"></i> あなたの過去の投稿</h3>
+            `;
+
+            // 3. 自分の投稿だけを取得
+            const { data: posts, error } = await exClient.from('posts').select(`id, content, media_url, user_id, created_at, profiles ( username, avatar_url )`).eq('user_id', currentUser.id).order('created_at', { ascending: false });
+            
+            if (error) { htmlContent += `<div class="text-center text-red-500 py-10">投稿の取得に失敗しました</div>`; timeline.innerHTML = htmlContent; return; }
+            if (!posts || posts.length === 0) { htmlContent += `<div class="text-center text-gray-400 py-10">まだ投稿がありません。上の「投稿」ボタンから呟いてみましょう！</div>`; timeline.innerHTML = htmlContent; return; }
+
+            timeline.innerHTML = htmlContent;
+
+            // 4. 投稿カードをマイページの下部にレンダリング
+            for (const post of posts) {
+                const { count: likeCount } = await exClient.from('likes').select('*', { count: 'exact', head: true }).eq('post_id', post.id);
+                const { count: commentCount } = await exClient.from('comments').select('*', { count: 'exact', head: true }).eq('post_id', post.id);
+                let isLiked = false;
+                const { data: myLike } = await exClient.from('likes').select('id').eq('post_id', post.id).eq('user_id', currentUser.id).maybeSingle();
+                if (myLike) isLiked = true;
+
+                const postCard = document.createElement('div');
+                postCard.id = `post-card-${post.id}`;
+                postCard.className = "bg-white border border-gray-200 rounded-xl overflow-hidden shadow-sm mb-4 transition-all duration-500";
+                postCard.innerHTML = `
+                    <div class="flex justify-between items-center p-3">
+                        <div class="flex items-center">
+                            <img src="${avatar}" class="w-10 h-10 rounded-full border mr-3 object-cover">
+                            <span class="font-bold text-gray-800">${profile.username}</span>
+                        </div>
+                        <button onclick="deletePost(${post.id})" class="text-gray-400 hover:text-red-500"><i class="fa-solid fa-trash-can"></i></button>
+                    </div>
+                    <div class="px-3 pb-3 text-gray-800 text-sm whitespace-pre-wrap">${parseRichText(post.content)}</div>
+                    ${post.media_url ? `<div class="w-full bg-black flex justify-center"><img src="${post.media_url}" class="max-h-96 w-full object-cover"></div>` : ''}
+                    <div class="p-3 border-t border-gray-100 flex items-center space-x-6">
+                        <button onclick="toggleLike(${post.id}, ${isLiked})" class="flex items-center space-x-1 ${isLiked ? 'text-red-500' : 'text-gray-400'} hover:scale-105 transition"><i class="${isLiked ? 'fa-solid' : 'fa-regular'} fa-heart text-lg"></i><span class="text-xs font-bold">${likeCount || 0}</span></button>
+                        <button onclick="openCommentModal(${post.id})" class="flex items-center space-x-1 text-gray-400 hover:text-green-500 transition"><i class="fa-regular fa-comment text-lg"></i><span class="text-xs font-bold">${commentCount || 0}</span></button>
+                    </div>
+                `;
+                timeline.appendChild(postCard);
+            }
         }
 
         async function fetchAndRenderPosts() {
@@ -365,7 +464,8 @@
                     }
                 }
             }
-            closePostModal(); document.getElementById('postText').value = ''; mediaFileInput.value = ''; await fetchAndRenderPosts();
+            closePostModal(); document.getElementById('postText').value = ''; mediaFileInput.value = ''; 
+            if (currentTab === 'mypage') await renderMyPage(); else await fetchAndRenderPosts();
         }
 
         async function renderNotificationsList() {
@@ -388,8 +488,8 @@
         async function clickNotificationItem(notificationId, postId) {
             await exClient.from('notifications').update({ is_read: true }).eq('id', notificationId); await checkUnreadNotifications();
             currentTab = "latest";
-            const tabs = { latest: document.getElementById('tabLatest'), recommend: document.getElementById('tabRecommend'), follow: document.getElementById('tabFollow'), notification: document.getElementById('tabNotification') };
-            Object.keys(tabs).forEach(k => { tabs[k].className = (k === "latest") ? "flex flex-col items-center text-green-600 font-bold text-xs w-1/4 relative" : "flex flex-col items-center text-gray-400 font-bold text-xs w-1/4 relative"; });
+            const tabs = { latest: document.getElementById('tabLatest'), recommend: document.getElementById('tabRecommend'), follow: document.getElementById('tabFollow'), notification: document.getElementById('tabNotification'), mypage: document.getElementById('tabMyPage') };
+            Object.keys(tabs).forEach(k => { tabs[k].className = (k === "latest") ? "flex flex-col items-center text-green-600 font-bold text-xs w-1/5 relative" : "flex flex-col items-center text-gray-400 font-bold text-xs w-1/5 relative"; });
             await fetchAndRenderPosts();
             setTimeout(() => {
                 const targetCard = document.getElementById(`post-card-${postId}`);
@@ -398,26 +498,20 @@
             }, 300);
         }
 
-        // 💬 コメント欄を開く処理（URL変更対応）
         async function openCommentModal(postId, updateHistory = true) {
             activePostIdForComment = postId; activeParentCommentId = null; 
             document.getElementById('replyTargetBadge').classList.add('hidden');
             document.getElementById('commentModal').classList.remove('hidden');
-            
-            // アプリ内のURLを #/post/ID に書き換える
-            if (updateHistory) {
-                window.history.pushState({type: 'post', id: postId}, null, `#/post/${postId}`);
-            }
-
+            if (updateHistory) { window.history.pushState({type: 'post', id: postId}, null, `#/post/${postId}`); }
             await renderComments();
         }
 
-        // 💬 コメント欄を閉じる処理（URLを戻す対応）
         function closeCommentModal(updateHistory = false) {
             document.getElementById('commentModal').classList.add('hidden');
             activePostIdForComment = null; activeParentCommentId = null;
             if (updateHistory) {
-                window.history.pushState(null, null, ' '); // URLのハッシュを綺麗に消す
+                if (currentTab === 'mypage') window.history.pushState(null, null, '#/mypage');
+                else window.history.pushState(null, null, ' ');
             }
         }
 
@@ -466,14 +560,19 @@
                         if (targetUser) { await exClient.from('notifications').insert([{ user_id: targetUser.id, type: 'mention', sender_name: myProfileName, source_id: activePostIdForComment }]); }
                     }
                 }
-                input.value = ''; cancelReplyTarget(); await renderComments(); await fetchAndRenderPosts();
+                input.value = ''; cancelReplyTarget(); await renderComments(); 
+                if (currentTab === 'mypage') await renderMyPage(); else await fetchAndRenderPosts();
             }
         }
 
         async function toggleCommentLike(commentId, isLiked) { if (!currentUser) { alert('ログインが必要です'); return; } if (isLiked) { await exClient.from('comment_likes').delete().eq('comment_id', commentId).eq('user_id', currentUser.id); } else { await exClient.from('comment_likes').insert([{ comment_id: commentId, user_id: currentUser.id }]); } await renderComments(); }
-        async function toggleLike(postId, isLiked) { if (!currentUser) { alert('ログインが必要です'); return; } if (isLiked) { await exClient.from('likes').delete().eq('post_id', postId).eq('user_id', currentUser.id); } else { await exClient.from('likes').insert([{ post_id: postId, user_id: currentUser.id }]); } await fetchAndRenderPosts(); }
+        async function toggleLike(postId, isLiked) { 
+            if (!currentUser) { alert('ログインが必要です'); return; } 
+            if (isLiked) { await exClient.from('likes').delete().eq('post_id', postId).eq('user_id', currentUser.id); } 
+            else { await exClient.from('likes').insert([{ post_id: postId, user_id: currentUser.id }]); } 
+            if (currentTab === 'mypage') await renderMyPage(); else await fetchAndRenderPosts(); 
+        }
 
-        // 👤 プロフィールを見る処理（URL変更対応）
         async function viewUserProfile(userId, updateHistory = true) {
             const { data: profile } = await exClient.from('public_profiles').select('*').eq('id', userId).single(); if (!profile) return;
             document.getElementById('viewAvatar').src = profile.avatar_url || "https://api.dicebear.com/7.x/adventurer/svg?seed=" + profile.username;
@@ -485,23 +584,19 @@
                 else { btnArea.innerHTML = `<button onclick="toggleFollow('${userId}', false)" class="bg-green-50 text-white px-6 py-2 rounded-full font-bold text-sm hover:bg-green-600 w-full">フォローする</button>`; }
             }
             document.getElementById('userViewModal').classList.remove('hidden');
-
-            // アプリ内のURLを #/user/ID に書き換える
-            if (updateHistory) {
-                window.history.pushState({type: 'user', id: userId}, null, `#/user/${userId}`);
-            }
+            if (updateHistory) { window.history.pushState({type: 'user', id: userId}, null, `#/user/${userId}`); }
         }
 
-        // 👤 プロフィールを閉じる処理（URLを戻す対応）
         function closeUserViewModal(updateHistory = false) {
             document.getElementById('userViewModal').classList.add('hidden');
             if (updateHistory) {
-                window.history.pushState(null, null, ' '); // URLのハッシュを綺麗に消す
+                if (currentTab === 'mypage') window.history.pushState(null, null, '#/mypage');
+                else window.history.pushState(null, null, ' ');
             }
         }
 
-        async function toggleFollow(targetUserId, isFollowing) { if (isFollowing) { await exClient.from('follows').delete().eq('follower_id', currentUser.id).eq('following_id', targetUserId); } else { await exClient.from('follows').insert([{ follower_id: currentUser.id, following_id: targetUserId }]); } closeUserViewModal(true); await fetchAndRenderPosts(); }
-        async function deletePost(postId) { if (confirm('削除しますか？')) { await exClient.from('posts').delete().eq('id', postId); await fetchAndRenderPosts(); } }
+        async function toggleFollow(targetUserId, isFollowing) { if (isFollowing) { await exClient.from('follows').delete().eq('follower_id', currentUser.id).eq('following_id', targetUserId); } else { await exClient.from('follows').insert([{ follower_id: currentUser.id, following_id: targetUserId }]); } closeUserViewModal(true); if (currentTab === 'mypage') await renderMyPage(); else await fetchAndRenderPosts(); }
+        async function deletePost(postId) { if (confirm('削除しますか？')) { await exClient.from('posts').delete().eq('id', postId); if (currentTab === 'mypage') await renderMyPage(); else await fetchAndRenderPosts(); } }
 
         async function handleAuthSubmit() {
             const username = document.getElementById('authUsername').value.trim(); const password = document.getElementById('authPassword').value.trim(); if (!username || !password) return; const dummyEmail = `${username}@gmail.com`;
@@ -514,7 +609,8 @@
         async function saveProfile() {
             if (!currentUser) return; const bioText = document.getElementById('editBio').value.trim(); const avatarFileInput = document.getElementById('avatarFile'); const avatarFile = avatarFileInput.files[0]; let avatarUrl = document.getElementById('myAvatar').src;
             if (avatarFile) { const compressedBlob = await compressImage(avatarFile); const fileName = `${currentUser.id}_${Date.now()}.jpg`; await exClient.storage.from('avatars').upload(fileName, compressedBlob, { contentType: 'image/jpeg', upsert: true }); const { data: { publicUrl } } = exClient.storage.from('avatars').getPublicUrl(fileName); avatarUrl = publicUrl; }
-            await exClient.from('profiles').update({ bio: bioText, avatar_url: avatarUrl }).eq('id', currentUser.id); location.reload();
+            await exClient.from('profiles').update({ bio: bioText, avatar_url: avatarUrl }).eq('id', currentUser.id); 
+            if (currentTab === 'mypage') await renderMyPage(); else location.reload();
         }
 
         async function handleLogout() { await exClient.auth.signOut(); location.reload(); }
