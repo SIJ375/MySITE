@@ -424,7 +424,6 @@
             const { error } = await exClient
                 .from('posts')
                 .insert([{
-                    id: Math.floor(Math.random() * 10000000),
                     user_id: currentUser.id,
                     content: text,
                     media_url: mediaUrl
