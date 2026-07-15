@@ -236,7 +236,11 @@
 
         async function fetchAnnouncement() {
             const { data, error } = await exClient.from('announcements').select('content').order('created_at', { ascending: false }).limit(1);
-            if (!error && data && data.length > 0) document.getElementById('announceText').innerText = data[0].content;
+            if (!error && data && data.length > 0) {
+                document.getElementById('announceText').innerText = data[0].content;
+                // ⬇️ この1行を追加して非表示を解除します
+                document.getElementById('announceArea').classList.remove('hidden');
+            }
         }
 
         async function submitAnnouncement() {
