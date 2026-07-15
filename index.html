@@ -23,6 +23,9 @@
                     <img id="myAvatar" onclick="openProfileModal()" class="w-8 h-8 rounded-full border cursor-pointer hover:opacity-80 transition" src="" alt="my avatar">
                     <span id="myName" onclick="openProfileModal()" class="text-sm font-bold text-gray-700 cursor-pointer hover:underline"></span>
                 </div>
+                <button id="adminAnnounceBtn" onclick="openAnnounceModal()" class="hidden bg-red-500 text-white px-3 py-1.5 rounded-full text-xs font-bold hover:bg-red-600 animate-pulse">
+                    <i class="fa-solid fa-bullhorn"></i> 告知
+                </button>
                 <button id="postBtn" onclick="openPostModal()" class="hidden bg-green-500 text-white px-3 py-1.5 rounded-full text-xs font-bold hover:bg-green-600">
                     <i class="fa-solid fa-pen"></i> 投稿
                 </button>
@@ -40,6 +43,14 @@
                 <span class="font-bold">自己紹介:</span> <span id="myBio">未設定</span>
             </div>
             <button onclick="openProfileModal()" class="text-green-600 hover:underline">編集</button>
+        </div>
+
+        <div id="announceArea" class="hidden bg-green-50 border-b border-green-200 p-4 space-y-2 text-sm text-green-800">
+            <div class="flex items-center space-x-2 font-bold text-green-700">
+                <i class="fa-solid fa-bullhorn animate-bounce"></i>
+                <span>公式からのお知らせ</span>
+            </div>
+            <p id="announceText" class="whitespace-pre-wrap leading-relaxed font-semibold">現在お知らせはありません。</p>
         </div>
 
         <main id="timeline" class="flex-1 p-4 space-y-6 pb-24">
@@ -77,7 +88,7 @@
             
             <div class="space-y-4">
                 <div>
-                    <label class="block text-xs font-bold text-gray-700 mb-1">アイコン画像（自動で超軽量化されます）</label>
+                    <label class="block text-xs font-bold text-gray-700 mb-1">アイコン画像</label>
                     <input id="avatarFile" type="file" accept="image/*" class="w-full text-xs text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-xs file:font-semibold file:bg-green-50 file:text-green-700 hover:file:bg-green-100">
                 </div>
 
@@ -99,17 +110,25 @@
             </div>
             <textarea id="postText" class="w-full border border-gray-300 rounded p-2 h-24 resize-none mb-4" placeholder="今なにしてる？"></textarea>
             
-            <label class="block text-xs font-bold text-gray-700 mb-1">画像を追加（自動で超軽量化されます）</label>
+            <label class="block text-xs font-bold text-gray-700 mb-1">画像を追加</label>
             <input id="postMediaFile" type="file" accept="image/*" class="w-full text-xs text-gray-500 mb-4 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-xs file:font-semibold file:bg-green-50 file:text-green-700 hover:file:bg-green-100">
             
             <button onclick="submitPost()" class="w-full bg-green-500 text-white py-2 rounded font-bold hover:bg-green-600">投稿する</button>
         </div>
     </div>
 
+    <div id="announceModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center hidden z-50 p-4">
+        <div class="bg-white rounded-lg w-full max-w-md p-6">
+            <div class="flex justify-between items-center mb-4">
+                <h3 class="text-lg font-bold text-red-600">公式お知らせを投稿</h3>
+                <button onclick="closeAnnounceModal()" class="text-gray-500 hover:text-gray-800 text-xl">&times;</button>
+            </div>
+            <textarea id="announceInputText" class="w-full border border-gray-300 rounded p-2 h-32 resize-none mb-4" placeholder="ユーザー全員に見せる重要なお知らせを入力..."></textarea>
+            <button onclick="submitAnnouncement()" class="w-full bg-red-500 text-white py-2 rounded font-bold hover:bg-red-600">お知らせを更新する</button>
+        </div>
+    </div>
+
     <script>
-        // ==========================================
-        // 【最重要】例のキーをここに貼り付け済み！
-        // ==========================================
         const EX_URL = "https://kdydbrscxrekivqmplyn.supabase.co";
         const EX_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImtkeWRicnNjeHJla2l2cW1wbHluIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODQxMDk0NjEsImV4cCI6MjA5OTY4NTQ2MX0._sqoMMFn5Zf1m4VarmbkjXpn0H3Tma5qmymI57JkOLA";
         
@@ -120,10 +139,11 @@
 
         window.onload = async () => {
             await checkUser();
+            await fetchAnnouncement(); // お知らせの読み込み
             await fetchAndRenderPosts();
         };
 
-        // 💡 画像を超軽量URL化（100KB前後までリサイズ圧縮）する内蔵ツール
+        // 画像を超軽量化する圧縮関数
         async function compressImage(file, maxWidth = 800, quality = 0.6) {
             return new Promise((resolve) => {
                 const reader = new FileReader();
@@ -135,20 +155,14 @@
                         const canvas = document.createElement('canvas');
                         let width = img.width;
                         let height = img.height;
-
-                        // 横幅をmaxWidth基準に比率維持で縮小
                         if (width > maxWidth) {
                             height = Math.round((height * maxWidth) / width);
                             width = maxWidth;
                         }
-
                         canvas.width = width;
                         canvas.height = height;
-
                         const ctx = canvas.getContext('2d');
                         ctx.drawImage(img, 0, 0, width, height);
-
-                        // JPEG形式に圧縮してBlobに変換
                         canvas.toBlob((blob) => {
                             resolve(blob);
                         }, 'image/jpeg', quality);
@@ -180,6 +194,11 @@
                     document.getElementById('myName').innerText = profile.username;
                     document.getElementById('myBio').innerText = profile.bio || "未設定";
                     document.getElementById('editBio').value = profile.bio || "";
+
+                    // 💡 「SIJ375」というユーザー名でログインしている場合のみ、お知らせ投稿ボタンを表示
+                    if (profile.username === 'SIJ375') {
+                        document.getElementById('adminAnnounceBtn').classList.remove('hidden');
+                    }
                 }
             } else {
                 document.getElementById('userInfo').classList.add('hidden');
@@ -187,10 +206,45 @@
                 document.getElementById('postBtn').classList.add('hidden');
                 document.getElementById('logoutBtn').classList.add('hidden');
                 document.getElementById('authBtn').classList.remove('hidden');
+                document.getElementById('adminAnnounceBtn').classList.add('hidden');
             }
         }
 
-        // 投稿一覧を「例の場所」から同期して表示する
+        // 📢 公式お知らせをデータベースから取得する
+        async function fetchAnnouncement() {
+            const { data, error } = await exClient
+                .from('announcements')
+                .select('content')
+                .order('created_at', { ascending: false })
+                .limit(1);
+
+            if (!error && data && data.length > 0) {
+                document.getElementById('announceText').innerText = data[0].content;
+                document.getElementById('announceArea').classList.remove('hidden');
+            } else {
+                document.getElementById('announceArea').classList.add('hidden');
+            }
+        }
+
+        // 📢 公式お知らせを送信する（SIJ375専用）
+        async function submitAnnouncement() {
+            const text = document.getElementById('announceInputText').value.trim();
+            if (!text) return;
+
+            const { error } = await exClient
+                .from('announcements')
+                .insert([{ content: text }]);
+
+            if (error) {
+                alert('お知らせの更新に失敗しました: ' + error.message);
+            } else {
+                alert('公式お知らせを更新しました！');
+                closeAnnounceModal();
+                await fetchAnnouncement();
+            }
+        }
+
+        // 投稿一覧を表示する
         async function fetchAndRenderPosts() {
             const timeline = document.getElementById('timeline');
             
@@ -204,6 +258,12 @@
 
             if (error || !posts) {
                 timeline.innerHTML = `<div class="text-center text-red-500 py-10">データの読み込みに失敗しました</div>`;
+                return;
+            }
+
+            // データが0件の場合は空メッセージ
+            if (posts.length === 0) {
+                timeline.innerHTML = `<div class="text-center text-gray-400 py-10">まだ投稿がありません。最初の投稿をしてみよう！</div>`;
                 return;
             }
 
@@ -231,7 +291,7 @@
             });
         }
 
-        // アカウント作成・ログイン処理
+        // アカウント作成・ログイン
         async function handleAuthSubmit() {
             const username = document.getElementById('authUsername').value.trim();
             const password = document.getElementById('authPassword').value.trim();
@@ -241,6 +301,7 @@
                 return;
             }
 
+            // メアド形式のエラー対策に「@gmail.com」を設定！
             const dummyEmail = `${username}@gmail.com`;
 
             if (isSignUpMode) {
@@ -284,7 +345,7 @@
             }
         }
 
-        // プロフィール保存（圧縮内蔵）
+        // プロフィール保存
         async function saveProfile() {
             if (!currentUser) return;
 
@@ -294,9 +355,8 @@
             let avatarUrl = document.getElementById('myAvatar').src;
 
             if (avatarFile) {
-                // 💡 画像の自動軽量化を実行
                 const compressedBlob = await compressImage(avatarFile);
-                const fileName = `${currentUser.id}_${Date.now()}.jpg`; // 圧縮後はすべてjpgに
+                const fileName = `${currentUser.id}_${Date.now()}.jpg`;
 
                 const { error: uploadError } = await exClient.storage
                     .from('avatars')
@@ -331,7 +391,7 @@
             }
         }
 
-        // 投稿を送信（圧縮内蔵）
+        // 新規投稿送信
         async function submitPost() {
             if (!currentUser) return;
             const text = document.getElementById('postText').value.trim();
@@ -342,9 +402,8 @@
             if (!text && !mediaFile) return;
 
             if (mediaFile) {
-                // 💡 画像の自動軽量化を実行
                 const compressedBlob = await compressImage(mediaFile);
-                const fileName = `${currentUser.id}_${Date.now()}.jpg`; // 圧縮後はすべてjpgに
+                const fileName = `${currentUser.id}_${Date.now()}.jpg`;
 
                 const { error: uploadError } = await exClient.storage
                     .from('posts')
@@ -375,7 +434,6 @@
                 alert('投稿に失敗しました: ' + error.message);
             } else {
                 closePostModal();
-                // フォームをリセット
                 document.getElementById('postText').value = '';
                 mediaFileInput.value = '';
                 await fetchAndRenderPosts();
@@ -396,6 +454,8 @@
         function closePostModal() { document.getElementById('postModal').classList.add('hidden'); }
         function openProfileModal() { document.getElementById('profileModal').classList.remove('hidden'); }
         function closeProfileModal() { document.getElementById('profileModal').classList.add('hidden'); }
+        function openAnnounceModal() { document.getElementById('announceModal').classList.remove('hidden'); }
+        function closeAnnounceModal() { document.getElementById('announceModal').classList.add('hidden'); }
 
         function toggleAuthMode() {
             isSignUpMode = !isSignUpMode;
