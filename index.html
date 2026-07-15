@@ -258,6 +258,12 @@
         }
 
         async function switchTab(tabName, updateHash = true) {
+            // 🆕 タブ切り替え時に新着通知ボタンを隠して基準IDをリセット
+            if (document.getElementById('newPostAlert')) {
+                document.getElementById('newPostAlert').classList.add('hidden');
+            }
+            if (typeof initLatestPostId === 'function') initLatestPostId();
+
             if ((tabName === 'follow' || tabName === 'notification' || tabName === 'mypage') && !currentUser) { 
                 alert('ログインが必要です'); switchTab('latest', true); return; 
             }
@@ -278,8 +284,18 @@
             await fetchAndRenderPosts();
         }
 
-        async function clearSearch() { currentSearchWord = ""; document.getElementById('searchInput').value = ""; document.getElementById('searchBadge').classList.add('hidden'); await fetchAndRenderPosts(); }
-        function clearSearchAndRoute() { window.history.pushState(null, null, ' '); clearSearch(); }
+async function clearSearch() { 
+            // 🆕 検索クリア時に新着通知ボタンを隠して基準IDをリセット
+            if (document.getElementById('newPostAlert')) {
+                document.getElementById('newPostAlert').classList.add('hidden');
+            }
+            if (typeof initLatestPostId === 'function') initLatestPostId();
+
+            currentSearchWord = ""; 
+            document.getElementById('searchInput').value = ""; 
+            document.getElementById('searchBadge').classList.add('hidden'); 
+            await fetchAndRenderPosts(); 
+        }
 
         function parseRichText(text) {
             if (!text) return "";
