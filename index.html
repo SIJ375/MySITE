@@ -351,8 +351,11 @@
             }
         }
 
+        /* 🛠️ 完全に補完したタイムライン表示関数 */
         async function fetchAndRenderPosts() {
             const timeline = document.getElementById('timeline');
+            timeline.innerHTML = '<div class="text-center text-gray-500 py-10">タイムラインを読み込み中...</div>';
+
             let query = exClient.from('posts').select(`id, content, media_url, user_id, created_at, profiles ( username, avatar_url )`);
             if (currentSearchWord) query = query.ilike('content', `%#${currentSearchWord}%`);
             if (currentTab === 'follow' && currentUser) {
@@ -379,7 +382,40 @@
                 const authorName = post.profiles?.username || "名無しユーザー";
                 const authorAvatar = post.profiles?.avatar_url || "https://api.dicebear.com/7.x/adventurer/svg?seed=" + authorName;
                 
-                // 省略していますが、元のコードのカードレンダリング処理がここに続きます。
+                const videoEmbedHtml = getYouTubeEmbedHtml(post.content);
+                const isMyPost = currentUser && currentUser.id === post.user_id;
+
+                const postCard = document.createElement('div');
+                postCard.id = `post-card-${post.id}`;
+                postCard.className = "bg-white border border-gray-200 rounded-xl overflow-hidden shadow-sm mb-4 transition-all duration-500";
+                
+                postCard.innerHTML = `
+                    <div class="flex justify-between items-center p-3">
+                        <div class="flex items-center cursor-pointer hover:opacity-80" onclick="viewUserProfile('${post.user_id}')">
+                            <img src="${authorAvatar}" class="w-10 h-10 rounded-full border mr-3 object-cover">
+                            <span class="font-bold text-gray-800">${authorName}</span>
+                        </div>
+                        ${isMyPost ? `<button onclick="deletePost(${post.id})" class="text-gray-400 hover:text-red-500"><i class="fa-solid fa-trash-can"></i></button>` : ''}
+                    </div>
+                    <div class="px-3 pb-3 text-gray-800 text-sm whitespace-pre-wrap">${parseRichText(post.content)}</div>
+                    ${videoEmbedHtml}
+                    ${renderMediaAttachment(post.media_url)}
+                    <div class="p-3 border-t border-gray-100 flex items-center space-x-6">
+                        <button onclick="toggleLike(${post.id}, ${post.isLiked})" class="flex items-center space-x-1 ${post.isLiked ? 'text-red-500' : 'text-gray-400'} hover:scale-105 transition">
+                            <i class="${post.isLiked ? 'fa-solid' : 'fa-regular'} fa-heart text-lg"></i>
+                            <span class="text-xs font-bold">${post.likeCount}</span>
+                        </button>
+                        <button onclick="openCommentModal(${post.id})" class="flex items-center space-x-1 text-gray-400 hover:text-green-500 transition">
+                            <i class="fa-regular fa-comment text-lg"></i>
+                            <span class="text-xs font-bold">${post.commentCount}</span>
+                        </button>
+                        <button onclick="copyPostLink(${post.id})" class="flex items-center space-x-1 text-gray-400 hover:text-blue-500 transition" title="リンクをコピー">
+                            <i class="fa-regular fa-share-from-square text-lg"></i>
+                            <span class="text-xs font-bold">シェア</span>
+                        </button>
+                    </div>
+                `;
+                timeline.appendChild(postCard);
             });
         }
 
@@ -394,13 +430,12 @@
         function closeProfileModal() { document.getElementById('profileModal').classList.add('hidden'); }
         function openUserSearchModal() { document.getElementById('userSearchModal').classList.remove('hidden'); }
         function closeUserSearchModal() { document.getElementById('userSearchModal').classList.add('hidden'); }
+        
         // 🔗 投稿の個別リンクを生成してクリップボードにコピーする関数
         function copyPostLink(postId) {
-            // 現在のサイトのベースURL（ハッシュ以降を除く）を取得し、投稿用ハッシュを結合
             const baseUrl = window.location.origin + window.location.pathname;
             const shareUrl = `${baseUrl}#/post/${postId}`;
 
-            // クリップボードにコピー
             navigator.clipboard.writeText(shareUrl).then(() => {
                 alert('投稿の個別リンクをコピーしました！');
             }).catch(err => {
@@ -408,6 +443,6 @@
                 alert('リンクのコピーに失敗しました。');
             });
         }
-    </script>
+</script>
 </body>
 </html>
