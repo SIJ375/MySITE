@@ -436,9 +436,9 @@
                             <img src="${authorAvatar}" class="w-10 h-10 rounded-full border mr-3 object-cover">
                             <span class="font-bold text-gray-800 hover:underline">${authorName}</span>
                         </div>
-                        ${isMyPost ? `
+                      ${isMyPost ? `
                             <div class="flex space-x-3 items-center">
-                                <button onclick="openEditPostModal(${post.id}, \`${safeContent}\`)" class="text-gray-400 hover:text-blue-500 text-xs font-bold transition"><i class="fa-solid fa-pen mr-1"></i>編集</button>
+                                <button onclick="openEditPostModal(${post.id}, \`${post.content.replace(/`/g, '\\`').replace(/\n/g, '\\n')}\`)" class="text-gray-400 hover:text-blue-500 text-xs font-bold transition"><i class="fa-solid fa-pen mr-1"></i>編集</button>
                                 <button onclick="deletePost(${post.id})" class="text-gray-400 hover:text-red-500 transition"><i class="fa-solid fa-trash-can"></i></button>
                             </div>
                         ` : ''}
