@@ -64,7 +64,12 @@
                 <button onclick="clearSearch()" class="text-gray-400 hover:text-gray-600">&times; 解除</button>
             </div>
         </header>
-
+<div id="newPostAlert" class="hidden text-center my-3 transition-all duration-300">
+            <button onclick="loadNewPosts()" class="bg-green-500 hover:bg-green-600 text-white text-xs font-bold px-4 py-2 rounded-full shadow-md animate-bounce">
+                <i class="fa-solid fa-arrow-up mr-1"></i> 新しい投稿
+            </button>
+        </div>
+        
         <div id="profileBar" class="hidden bg-gray-50 p-3 border-b border-gray-100 text-xs text-gray-600 flex justify-between items-center">
             <div>
                 <span class="font-bold">自己紹介:</span> <span id="myBio">未設定</span>
@@ -129,6 +134,9 @@
         let isSignUpMode = true;
         let currentSearchWord = "";
         let currentTab = "latest"; 
+        // 🆕 自動更新チェック用の変数を追記
+        let latestPostId = null;
+        let checkNewPostInterval = null;
         
         let activePostIdForComment = null;
         let activeParentCommentId = null;
@@ -138,6 +146,9 @@
             await fetchAnnouncement();
             await handleUrlRouting();
             if (currentUser) {
+                // 🆕 初回起動時に最新のIDを記憶し、5秒ごとの監視をスタート
+            await initLatestPostId();
+            checkNewPostInterval = setInterval(checkNewPosts, 5000);
                 await checkUnreadNotifications();
                 setInterval(checkUnreadNotifications, 3000);
             }
@@ -602,6 +613,32 @@
             } catch (err) {
                 alert('コピーに失敗しました。');
             }
+        }
+        // 🆕 最新の投稿IDを取得する関数
+        async function initLatestPostId() {
+            const { data, error } = await exClient.from('posts').select('id').order('created_at', { ascending: false }).limit(1).maybeSingle();
+            if (!error && data) { latestPostId = data.id; }
+        }
+
+        // 🆕 5秒ごとに新しい投稿があるか調べる関数
+        async function checkNewPosts() {
+            // 最新タブかつ検索中でない場合のみチェック
+            if (currentTab !== 'latest' || currentSearchWord) return;
+            
+            const { data, error } = await exClient.from('posts').select('id').order('created_at', { ascending: false }).limit(1).maybeSingle();
+            if (!error && data && latestPostId) {
+                if (data.id > latestPostId) {
+                    document.getElementById('newPostAlert').classList.remove('hidden');
+                }
+            }
+        }
+
+        // 🆕 「新しい投稿」ボタンが押された時の更新処理
+        async function loadNewPosts() {
+            document.getElementById('newPostAlert').classList.add('hidden');
+            await initLatestPostId();
+            await fetchAndRenderPosts();
+            window.scrollTo({ top: 0, behavior: 'smooth' });
         }
     </script>
 </body>
