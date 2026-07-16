@@ -421,28 +421,13 @@
                         <div class="flex items-center cursor-pointer hover:opacity-80 transition" onclick="viewUserProfile('${post.user_id}')">
                             <img src="${authorAvatar}" class="w-10 h-10 rounded-full border mr-3 object-cover">
                             <span class="font-bold text-gray-800 hover:underline">${authorName}</span>
-                        </div>let isMyPost = currentUser && currentUser.id === post.user_id;
-                
-                // 🆕 本文内の改行やバッククォート、バックスラッシュを安全にエスケープする処理
-                const safeContent = post.content
-                    .replace(/\\/g, '\\\\')
-                    .replace(/`/g, '\\`')
-                    .replace(/\n/g, '\\n')
-                    .replace(/\r/g, '\\r');
-
-                postCard.innerHTML = `
-                    <div class="flex justify-between items-center p-3">
-                        <div class="flex items-center cursor-pointer" onclick="viewUserProfile('${post.user_id}')">
-                            <img src="${authorAvatar}" class="w-10 h-10 rounded-full border mr-3 object-cover">
-                            <span class="font-bold text-gray-800 hover:underline">${authorName}</span>
                         </div>
-                      ${isMyPost ? `
-                            <div class="flex space-x-3 items-center">
-                                <button onclick="openEditPostModal(${post.id}, \`${post.content.replace(/`/g, '\\`').replace(/\n/g, '\\n')}\`)" class="text-gray-400 hover:text-blue-500 text-xs font-bold transition"><i class="fa-solid fa-pen mr-1"></i>編集</button>
-                                <button onclick="deletePost(${post.id})" class="text-gray-400 hover:text-red-500 transition"><i class="fa-solid fa-trash-can"></i></button>
-                            </div>
-                        ` : ''}
-                    </div>
+                       ${isMyPost ? `
+    <div class="flex space-x-3 items-center">
+        <button onclick="openEditPostModal(${post.id}, \`${post.content.replace(/`/g, '\\`').replace(/\n/g, '\\n')}\`)" class="text-gray-400 hover:text-blue-500 text-xs font-bold transition"><i class="fa-solid fa-pen mr-1"></i>編集</button>
+        <button onclick="deletePost(${post.id})" class="text-gray-400 hover:text-red-500 transition"><i class="fa-solid fa-trash-can"></i></button>
+    </div>
+` : ''}
                     </div>
                     <div class="px-3 pb-3 text-gray-800 text-sm whitespace-pre-wrap">${parseRichText(post.content)}</div>
                     ${videoEmbedHtml}
