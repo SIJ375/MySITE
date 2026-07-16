@@ -245,23 +245,33 @@
             });
         }
 
-        async function checkUser() {
-            const { data: { user } } = await exClient.auth.getUser();
-            if (user) {
-                currentUser = user;
-                const { data: profile } = await exClient.from('profiles').select('*').eq('id', user.id).single();
-                if (profile) {
-                    myProfileName = profile.username;
-                    document.getElementById('userInfo').classList.remove('hidden');
-                    document.getElementById('profileBar').classList.remove('hidden');
-                    document.getElementById('postBtn').classList.remove('hidden');
-                    document.getElementById('logoutBtn').classList.remove('hidden');
-                    document.getElementById('authBtn').classList.add('hidden');
-                    document.getElementById('myAvatar').src = profile.avatar_url || "https://api.dicebear.com/7.x/adventurer/svg?seed=" + profile.username;
-                    document.getElementById('myName').innerText = profile.username;
-                    document.getElementById('myBio').innerText = profile.bio || "未設定";
-                    document.getElementById('editBio').value = profile.bio || "";
-                    if (profile.username === 'SIJ375') document.getElementById('adminAnnounceBtn').classList.remove('hidden');
+      async function checkUser() {
+            const { data: { session } } = await exClient.auth.getSession();
+            currentUser = session ? session.user : null;
+            if (currentUser) {
+                document.getElementById('authArea').classList.add('hidden');
+                document.getElementById('userInfo').classList.remove('hidden');
+                document.getElementById('postBtn').classList.remove('hidden');
+                document.getElementById('myName').innerText = currentUser.raw_user_meta_data.username || currentUser.email;
+                const avatar = currentUser.raw_user_meta_data.avatar_url || "https://placehold.co/100x100?text=NoImage";
+                document.getElementById('myAvatar').src = avatar;
+            } else {
+                document.getElementById('authArea').classList.remove('hidden');
+                document.getElementById('userInfo').classList.add('hidden');
+                document.getElementById('postBtn').classList.add('hidden');
+            }
+
+            // ⬇️ ここがあなたの書いてくれたコードを差し込む場所です！ ⬇️
+            if (currentUser && currentUser.raw_user_meta_data && currentUser.raw_user_meta_data.isAdmin) {
+                document.getElementById('adminAnnounceBtn').classList.remove('hidden');
+                // 🆕 管理者なら閉鎖・解除ボタンを表示する
+                document.getElementById('adminCloseBtn').classList.remove('hidden');
+                document.getElementById('adminOpenBtn').classList.remove('hidden');
+            } else {
+                document.getElementById('adminAnnounceBtn').classList.add('hidden');
+                // 🆕 一般ユーザーなら閉鎖・解除ボタンを隠す
+                document.getElementById('adminCloseBtn').classList.add('hidden');
+                document.getElementById('adminOpenBtn').classList.add('hidden');
             }
         }
 
