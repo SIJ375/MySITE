@@ -709,6 +709,31 @@ if ('Notification' in window) {
         }
     });
 }
+        // 🆕 サーバー閉鎖・解除を切り替える関数
+        async function toggleServerClose(shouldClose) {
+            const confirmMsg = shouldClose 
+                ? "サーバーを一時的に閉鎖（メンテナンスモード）にしますか？" 
+                : "サーバーの閉鎖を解除して通常運転に戻しますか？";
+                
+            if (!confirm(confirmMsg)) return;
+
+            const text = shouldClose 
+                ? "[閉鎖中] 現在システムアップデート中です。終了までしばらくお待ちください。" 
+                : "メンテナンスは無事終了しました！ご協力ありがとうございました。";
+
+            // announcementsテーブルに最新状態として書き込み
+            const { error } = await exClient
+                .from('announcements')
+                .insert([{ content: text }]);
+
+            if (error) {
+                alert('状態の切り替えに失敗しました。');
+                console.error(error);
+            } else {
+                alert(shouldClose ? 'サーバーを閉鎖しました。' : '閉鎖を解除しました。');
+                await fetchAnnouncement(); // 即時反映
+            }
+        }
     </script>
 </body>
 </html>
