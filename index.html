@@ -694,6 +694,21 @@
                 await fetchAndRenderPosts(); // タイムラインを再読込
             }
         }
+        // 1. ブラウザが通知に対応しているか確認
+if ('Notification' in window) {
+    // 2. ユーザーに通知の許可をリクエスト
+    Notification.requestPermission().then(permission => {
+        if (permission === 'granted') {
+            console.log('通知が許可されました！');
+            
+            // 3. 許可されたらテスト通知を表示
+            new Notification('SIJ！コミュニティ', {
+                body: '新しい投稿がありました！',
+                icon: 'icon.png' // アイコン画像
+            });
+        }
+    });
+}
     </script>
 </body>
 </html>
