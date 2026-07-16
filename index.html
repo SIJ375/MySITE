@@ -122,7 +122,18 @@
     <div id="profileModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center hidden z-50 p-4"><div class="bg-white rounded-lg w-full max-w-md p-6"><div class="flex justify-between items-center mb-4"><h3 class="text-lg font-bold">プロフィール編集</h3><button onclick="closeProfileModal()" class="text-gray-500 hover:text-gray-800 text-xl">&times;</button></div><div class="space-y-4"><div><label class="block text-xs font-bold text-gray-700 mb-1">アイコン画像</label><input id="avatarFile" type="file" accept="image/*" class="w-full text-xs text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-xs file:font-semibold file:bg-green-50 file:text-green-700 hover:file:bg-green-100"></div><div><label class="block text-xs font-bold text-gray-700 mb-1">一言（自己紹介）</label><input id="editBio" type="text" class="w-full border p-2 rounded text-sm" placeholder="今の一言を入力してください"></div><button onclick="saveProfile()" class="w-full bg-green-500 text-white py-2 rounded font-bold hover:bg-green-600 text-sm">保存する</button></div></div></div>
     <div id="postModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center hidden z-50 p-4"><div class="bg-white rounded-lg w-full max-w-md p-6"><div class="flex justify-between items-center mb-4"><h3 class="text-lg font-bold">新規投稿</h3><button onclick="closePostModal()" class="text-gray-500 hover:text-gray-800 text-xl">&times;</button></div><textarea id="postText" class="w-full border border-gray-300 rounded p-2 h-24 resize-none mb-4" placeholder="今なにしてる？ YouTubeのURLを貼ると動画が埋め込まれるよ！"></textarea><label class="block text-xs font-bold text-gray-700 mb-1">画像を追加（任意）</label><input id="postMediaFile" type="file" accept="image/*" class="w-full text-xs text-gray-500 mb-4 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-xs file:font-semibold file:bg-green-50 file:text-green-700 hover:file:bg-green-100"><button onclick="submitPost()" class="w-full bg-green-500 text-white py-2 rounded font-bold hover:bg-green-600">投稿する</button></div></div>
     <div id="announceModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center hidden z-50 p-4"><div class="bg-white rounded-lg w-full max-w-md p-6"><div class="flex justify-between items-center mb-4"><h3 class="text-lg font-bold text-red-600">公式お知らせを投稿</h3><button onclick="closeAnnounceModal()" class="text-gray-500 hover:text-gray-800 text-xl">&times;</button></div><textarea id="announceInputText" class="w-full border border-gray-300 rounded p-2 h-32 resize-none mb-4" placeholder="ユーザー全員に見せる重要なお知らせを入力..."></textarea><button onclick="submitAnnouncement()" class="w-full bg-red-500 text-white py-2 rounded font-bold hover:bg-red-600">お知らせを更新する</button></div></div>
-
+<div id="editPostModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center hidden z-50 p-4">
+        <div class="bg-white rounded-lg w-full max-w-md p-6">
+            <div class="flex justify-between items-center mb-4">
+                <h3 class="text-lg font-bold">投稿を編集</h3>
+                <button onclick="closeEditPostModal()" class="text-gray-500 hover:text-gray-800 text-xl">&times;</button>
+            </div>
+            <input type="hidden" id="editPostId">
+            <textarea id="editPostText" class="w-full border border-gray-300 rounded p-2 h-24 resize-none mb-4" placeholder="投稿を編集します..."></textarea>
+            <button onclick="submitEditPost()" class="w-full bg-green-500 text-white py-2 rounded font-bold hover:bg-green-600">更新する</button>
+        </div>
+    </div>
+    
     <script>
         const EX_URL = "https://kdydbrscxrekivqmplyn.supabase.co";
         const EX_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImtkeWRicnNjeHJla2l2cW1wbHluIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODQxMDk0NjEsImV4cCI6MjA5OTY4NTQ2MX0._sqoMMFn5Zf1m4VarmbkjXpn0H3Tma5qmymI57JkOLA";
@@ -140,7 +151,10 @@
         
         let activePostIdForComment = null;
         let activeParentCommentId = null;
+        // 🆕 編集中の投稿IDを保存する変数
+        let editingPostId = null;
 
+        
         window.onload = async () => {
             await checkUser();
             await fetchAnnouncement();
@@ -639,6 +653,29 @@
             await initLatestPostId();
             await fetchAndRenderPosts();
             window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+        // 🆕 編集した内容をSupabaseに保存して反映する関数
+        async function submitEditPost() {
+            const postId = document.getElementById('editPostId').value;
+            const newContent = document.getElementById('editPostText').value.trim();
+
+            if (!newContent) {
+                alert('投稿内容を入力してください。');
+                return;
+            }
+
+            const { error } = await exClient
+                .from('posts')
+                .update({ content: newContent })
+                .eq('id', postId);
+
+            if (error) {
+                alert('投稿の更新に失敗しました。');
+                console.error(error);
+            } else {
+                closeEditPostModal();
+                await fetchAndRenderPosts(); // タイムラインを再読込
+            }
         }
     </script>
 </body>
