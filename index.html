@@ -659,6 +659,18 @@
             await fetchAndRenderPosts();
             window.scrollTo({ top: 0, behavior: 'smooth' });
         }
+        // 🆕 編集モーダルを開閉する関数
+        function openEditPostModal(postId, currentContent) {
+            editingPostId = postId;
+            document.getElementById('editPostId').value = postId;
+            document.getElementById('editPostText').value = currentContent;
+            document.getElementById('editPostModal').classList.remove('hidden');
+        }
+
+        function closeEditPostModal() {
+            document.getElementById('editPostModal').classList.add('hidden');
+            editingPostId = null;
+        }
         // 🆕 編集した内容をSupabaseに保存して反映する関数
         async function submitEditPost() {
             const postId = document.getElementById('editPostId').value;
