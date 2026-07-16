@@ -35,6 +35,12 @@
                     <button id="adminAnnounceBtn" onclick="openAnnounceModal()" class="hidden bg-red-500 text-white px-3 py-1.5 rounded-full text-xs font-bold hover:bg-red-600 animate-pulse">
                         <i class="fa-solid fa-bullhorn"></i> 告知
                     </button>
+                    <button id="adminCloseBtn" onclick="toggleServerClose(true)" class="hidden bg-gray-800 text-white px-3 py-1.5 rounded-full text-xs font-bold hover:bg-black">
+                        <i class="fa-solid fa-lock"></i> サーバー閉鎖
+                    </button>
+                    <button id="adminOpenBtn" onclick="toggleServerClose(false)" class="hidden bg-blue-500 text-white px-3 py-1.5 rounded-full text-xs font-bold hover:bg-blue-600">
+                        <i class="fa-solid fa-lock-open"></i> 閉鎖解除
+                    </button>
                     <button id="postBtn" onclick="openPostModal()" class="hidden bg-green-500 text-white px-3 py-1.5 rounded-full text-xs font-bold hover:bg-green-600">
                         <i class="fa-solid fa-pen"></i> 投稿
                     </button>
@@ -77,25 +83,11 @@
             <button onclick="openProfileModal()" class="text-green-600 hover:underline">編集</button>
         </div>
 
-        <div id="announceArea" class="hidden bg-green-50 border-b border-green-200 p-4 space-y-2 text-sm text-green-800">
+       <div id="announceArea" class="hidden bg-green-50 border-b border-green-200 p-4 space-y-2 text-sm text-green-800">
             <div class="flex items-center space-x-2 font-bold text-green-700">
                 <i class="fa-solid fa-bullhorn animate-bounce"></i>
                 <span>公式からのお知らせ</span>
             </div>
-            <div id="userInfo" class="hidden flex items-center space-x-2">
-                        <img id="myAvatar" onclick="openProfileModal()" class="w-8 h-8 rounded-full border cursor-pointer hover:opacity-80 transition" src="" alt="my avatar">
-                        <span id="myName" onclick="openProfileModal()" class="text-sm font-bold text-gray-700 cursor-pointer hover:underline"></span>
-                    </div>
-                    <button id="adminAnnounceBtn" onclick="openAnnounceModal()" class="hidden bg-red-500 text-white px-3 py-1.5 rounded-full text-xs font-bold hover:bg-red-600 animate-pulse">
-                        <i class="fa-solid fa-bullhorn"></i> 告知
-                    </button>
-                    <button id="adminCloseBtn" onclick="toggleServerClose(true)" class="hidden bg-gray-800 text-white px-3 py-1.5 rounded-full text-xs font-bold hover:bg-black">
-                        <i class="fa-solid fa-lock"></i> サーバー閉鎖
-                    </button>
-                    <button id="adminOpenBtn" onclick="toggleServerClose(false)" class="hidden bg-blue-500 text-white px-3 py-1.5 rounded-full text-xs font-bold hover:bg-blue-600">
-                        <i class="fa-solid fa-lock-open"></i> 閉鎖解除
-                    </button>
-                    <button id="postBtn" onclick="openPostModal()" class="hidden bg-green-500 text-white px-3 py-1.5 rounded-full text-xs font-bold hover:bg-green-600">
             <p id="announceText" class="whitespace-pre-wrap leading-relaxed font-semibold">現在お知らせはありません。</p>
         </div>
 
