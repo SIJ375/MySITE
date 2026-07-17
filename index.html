@@ -83,18 +83,27 @@
             <button onclick="openProfileModal()" class="text-green-600 hover:underline">編集</button>
         </div>
 
-       <div id="announceArea" class="hidden bg-green-50 border-b border-green-200 p-4 space-y-2 text-sm text-green-800">
+      <div id="announceArea" class="hidden bg-green-50 border-b border-green-200 p-4 space-y-2 text-sm text-green-800">
             <div class="flex items-center space-x-2 font-bold text-green-700">
                 <i class="fa-solid fa-bullhorn animate-bounce"></i>
                 <span>公式からのお知らせ</span>
             </div>
             <p id="announceText" class="whitespace-pre-wrap leading-relaxed font-semibold">現在お知らせはありません。</p>
         </div>
-
-        <main id="timeline" class="flex-1 p-4 space-y-6 pb-24">
-            <div class="text-center text-gray-500 py-10">読み込み中...</div>
-        </main>
-
+      <div id="userInfo" class="hidden flex items-center space-x-2">
+                <img id="myAvatar" onclick="openProfileModal()" class="w-8 h-8 rounded-full border cursor-pointer hover:opacity-80 transition" src="" alt="my avatar">
+                <span id="myName" onclick="openProfileModal()" class="text-sm font-bold text-gray-700 cursor-pointer hover:underline"></span>
+            </div>
+            <button id="adminAnnounceBtn" onclick="openAnnounceModal()" class="hidden bg-red-500 text-white px-3 py-1.5 rounded-full text-xs font-bold hover:bg-red-600 animate-pulse">
+                <i class="fa-solid fa-bullhorn"></i> 告知
+            </button>
+            <button id="adminCloseBtn" onclick="toggleServerClose(true)" class="hidden bg-gray-800 text-white px-3 py-1.5 rounded-full text-xs font-bold hover:bg-black">
+                <i class="fa-solid fa-lock"></i> サーバー閉鎖
+            </button>
+            <button id="adminOpenBtn" onclick="toggleServerClose(false)" class="hidden bg-blue-500 text-white px-3 py-1.5 rounded-full text-xs font-bold hover:bg-blue-600">
+                <i class="fa-solid fa-lock-open"></i> 閉鎖解除
+            </button>
+        
         <nav class="fixed bottom-0 left-0 right-0 max-w-[500px] mx-auto bg-white border-t border-gray-200 flex justify-around py-3 z-10 shadow-lg">
             <button id="tabLatest" onclick="switchTab('latest')" class="flex flex-col items-center text-green-600 font-bold text-xs w-1/5">
                 <i class="fa-solid fa-globe text-lg mb-0.5"></i>
@@ -165,15 +174,24 @@
             await checkUser();
             await fetchAnnouncement();
             await handleUrlRouting();
+            
+            // 🆕 アプリ起動時に通知の許可をリクエストする（ここにお引っ越し）
+            if ('Notification' in window) {
+                Notification.requestPermission().then(permission => {
+                    if (permission === 'granted') {
+                        console.log('通知が許可されました！');
+                    }
+                });
+            }
+
             if (currentUser) {
                 // 🆕 初回起動時に最新のIDを記憶し、5秒ごとの監視をスタート
-            await initLatestPostId();
-            checkNewPostInterval = setInterval(checkNewPosts, 5000);
+                await initLatestPostId();
+                checkNewPostInterval = setInterval(checkNewPosts, 5000);
                 await checkUnreadNotifications();
                 setInterval(checkUnreadNotifications, 3000);
             }
         };
-
         window.onpopstate = async () => { await handleUrlRouting(); };
 
         async function handleUrlRouting() {
@@ -237,18 +255,22 @@
             });
         }
 
-      async function checkUser() {
+async function checkUser() {
             const { data: { session } } = await exClient.auth.getSession();
             currentUser = session ? session.user : null;
             if (currentUser) {
-                document.getElementById('authArea').classList.add('hidden');
+                // 🛠️ 存在しない authArea の代わりに、ログイン/ログアウトボタンを正しく制御します
+                document.getElementById('authBtn').classList.add('hidden');
+                document.getElementById('logoutBtn').classList.remove('hidden');
                 document.getElementById('userInfo').classList.remove('hidden');
                 document.getElementById('postBtn').classList.remove('hidden');
                 document.getElementById('myName').innerText = currentUser.raw_user_meta_data.username || currentUser.email;
                 const avatar = currentUser.raw_user_meta_data.avatar_url || "https://placehold.co/100x100?text=NoImage";
                 document.getElementById('myAvatar').src = avatar;
             } else {
-                document.getElementById('authArea').classList.remove('hidden');
+                // 🛠️ 未ログイン時の制御
+                document.getElementById('authBtn').classList.remove('hidden');
+                document.getElementById('logoutBtn').classList.add('hidden');
                 document.getElementById('userInfo').classList.add('hidden');
                 document.getElementById('postBtn').classList.add('hidden');
             }
@@ -719,21 +741,7 @@
                 await fetchAndRenderPosts(); // タイムラインを再読込
             }
         }
-        // 1. ブラウザが通知に対応しているか確認
-if ('Notification' in window) {
-    // 2. ユーザーに通知の許可をリクエスト
-    Notification.requestPermission().then(permission => {
-        if (permission === 'granted') {
-            console.log('通知が許可されました！');
-            
-            // 3. 許可されたらテスト通知を表示
-            new Notification('SIJ！コミュニティ', {
-                body: '新しい投稿がありました！',
-                icon: 'icon.png' // アイコン画像
-            });
-        }
-    });
-}
+        
         // 🆕 サーバー閉鎖・解除を切り替える関数
         async function toggleServerClose(shouldClose) {
             const confirmMsg = shouldClose 
