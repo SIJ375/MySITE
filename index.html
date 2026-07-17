@@ -22,6 +22,17 @@
 </head>
 <body>
 
+    </head>
+<body>
+    <div id="maintenanceOverlay" class="fixed inset-0 bg-gray-900 text-white z-[9999] flex flex-col items-center justify-center p-6 hidden">
+        <div class="text-center max-w-md">
+            <i class="fa-solid fa-gears text-6xl text-yellow-500 mb-6 animate-pulse"></i>
+            <h1 class="text-2xl font-bold mb-4">メンテナンス中</h1>
+            <p id="maintenanceMessage" class="text-gray-300 mb-6">ただいまメンテナンス中です。管理者以外はご利用いただけません。</p>
+            <p class="text-xs text-gray-500">再開まで今しばらくお待ちください。</p>
+        </div>
+    </div>
+
     <div class="main-container shadow-lg flex flex-col min-h-screen">
         
         <header class="sticky top-0 bg-white border-b border-gray-200 p-4 z-10 space-y-3">
@@ -144,16 +155,79 @@
         let myProfileName = "";
         let isSignUpMode = true;
         let currentSearchWord = "";
-        let currentTab = "latest"; 
+        let currentTab = "latest";
         // 🆕 自動更新チェック用の変数を追記
         let latestPostId = null;
         let checkNewPostInterval = null;
-        
         let activePostIdForComment = null;
         let activeParentCommentId = null;
         // 🆕 編集中の投稿IDを保存する変数
         let editingPostId = null;
 
+        // 🔧 メンテナンス管理用変数
+        let isMaintenanceActive = false;
+        let allowedAdminUser = 'admin'; // 管理者のユーザー名を設定してください
+
+        // 🔧 メンテナンス状態をチェックして画面を制御する関数
+        async function checkMaintenanceStatus() {
+            try {
+                // ローカルストレージからログイン中のユーザー情報を取得
+                const savedUserStr = localStorage.getItem('ex_session_user') || 'null';
+                const currentSessionUser = JSON.parse(savedUserStr);
+
+                const { data, error } = await exClient
+                    .from('maintenance_settings')
+                    .select('*')
+                    .eq('id', 1)
+                    .single();
+
+                if (error) {
+                    console.error('メンテナンス状態の取得に失敗しました:', error);
+                    return;
+                }
+
+                if (data) {
+                    isMaintenanceActive = data.is_maintenance;
+                    allowedAdminUser = data.allowed_admin_username;
+
+                    const isCurrentAdmin = currentSessionUser && currentSessionUser.username === allowedAdminUser;
+
+                    // メンテナンスON かつ ログインユーザーが管理者ではない場合、画面をロック
+                    if (isMaintenanceActive && !isCurrentAdmin) {
+                        document.getElementById('maintenanceMessage').textContent = data.message;
+                        document.getElementById('maintenanceOverlay').classList.remove('hidden');
+                        
+                        // 定期実行処理があれば停止
+                        if (checkNewPostInterval) clearInterval(checkNewPostInterval);
+                    } else {
+                        // 通常時、または管理者ログイン時は画面を出す
+                        document.getElementById('maintenanceOverlay').classList.add('hidden');
+                    }
+                }
+            } catch (err) {
+                console.error('メンテナンスチェック中にエラーが発生しました:', err);
+            }
+        }
+
+        window.onload = async () => {
+            await checkUser();
+            await fetchAnnouncement();
+            
+            // 🔧 起動後すぐにメンテナンスモードか判定
+            await checkMaintenanceStatus();
+
+            await handleUrlRouting();
+            if (currentUser) {
+                // メンテナンス中でなければ通常通り自動更新をスタート
+                if (!isMaintenanceActive || myProfileName === allowedAdminUser) {
+                    await initLatestPostId();
+                    checkNewPostInterval = setInterval(checkNewPosts, 5000);
+                    await checkUnreadNotifications();
+                    setInterval(checkUnreadNotifications, 3000);
+                }
+            }
+        };
+        
         
         window.onload = async () => {
             await checkUser();
