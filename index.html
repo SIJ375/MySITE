@@ -22,17 +22,6 @@
 </head>
 <body>
 
-    </head>
-<body>
-    <div id="maintenanceOverlay" class="fixed inset-0 bg-gray-900 text-white z-[9999] flex flex-col items-center justify-center p-6 hidden">
-        <div class="text-center max-w-md">
-            <i class="fa-solid fa-gears text-6xl text-yellow-500 mb-6 animate-pulse"></i>
-            <h1 class="text-2xl font-bold mb-4">メンテナンス中</h1>
-            <p id="maintenanceMessage" class="text-gray-300 mb-6">ただいまメンテナンス中です。管理者以外はご利用いただけません。</p>
-            <p class="text-xs text-gray-500">再開まで今しばらくお待ちください。</p>
-        </div>
-    </div>
-
     <div class="main-container shadow-lg flex flex-col min-h-screen">
         
         <header class="sticky top-0 bg-white border-b border-gray-200 p-4 z-10 space-y-3">
@@ -155,113 +144,29 @@
         let myProfileName = "";
         let isSignUpMode = true;
         let currentSearchWord = "";
-        let currentTab = "latest";
+        let currentTab = "latest"; 
         // 🆕 自動更新チェック用の変数を追記
         let latestPostId = null;
         let checkNewPostInterval = null;
+        
         let activePostIdForComment = null;
         let activeParentCommentId = null;
         // 🆕 編集中の投稿IDを保存する変数
         let editingPostId = null;
 
-        // 🔧 メンテナンス管理用変数
-        let isMaintenanceActive = false;
-        let allowedAdminUser = 'admin'; // 管理者のユーザー名を設定してください
-
-        // 🔧 メンテナンス状態をチェックして画面を制御する関数
-        async function checkMaintenanceStatus() {
-            try {
-                // ローカルストレージからログイン中のユーザー情報を取得
-                const savedUserStr = localStorage.getItem('ex_session_user') || 'null';
-                const currentSessionUser = JSON.parse(savedUserStr);
-
-                const { data, error } = await exClient
-                    .from('maintenance_settings')
-                    .select('*')
-                    .eq('id', 1)
-                    .single();
-
-                if (error) {
-                    console.error('メンテナンス状態の取得に失敗しました:', error);
-                    return;
-                }
-
-                if (data) {
-                    isMaintenanceActive = data.is_maintenance;
-                    allowedAdminUser = data.allowed_admin_username;
-
-                    const isCurrentAdmin = currentSessionUser && currentSessionUser.username === allowedAdminUser;
-
-                    // メンテナンスON かつ ログインユーザーが管理者ではない場合、画面をロック
-                    if (isMaintenanceActive && !isCurrentAdmin) {
-                        document.getElementById('maintenanceMessage').textContent = data.message;
-                        document.getElementById('maintenanceOverlay').classList.remove('hidden');
-                        
-                        // 定期実行処理があれば停止
-                        if (checkNewPostInterval) clearInterval(checkNewPostInterval);
-                    } else {
-                        // 通常時、または管理者ログイン時は画面を出す
-                        document.getElementById('maintenanceOverlay').classList.add('hidden');
-                    }
-                }
-            } catch (err) {
-                console.error('メンテナンスチェック中にエラーが発生しました:', err);
-            }
-        }
-
+        
         window.onload = async () => {
             await checkUser();
             await fetchAnnouncement();
-            
-            // 🔧 起動後すぐにメンテナンスモードか判定
-            await checkMaintenanceStatus();
-
             await handleUrlRouting();
             if (currentUser) {
-                // メンテナンス中でなければ通常通り自動更新をスタート
-                if (!isMaintenanceActive || myProfileName === allowedAdminUser) {
-                    await initLatestPostId();
-                    checkNewPostInterval = setInterval(checkNewPosts, 5000);
-                    await checkUnreadNotifications();
-                    setInterval(checkUnreadNotifications, 3000);
-                }
+                // 🆕 初回起動時に最新のIDを記憶し、5秒ごとの監視をスタート
+            await initLatestPostId();
+            checkNewPostInterval = setInterval(checkNewPosts, 5000);
+                await checkUnreadNotifications();
+                setInterval(checkUnreadNotifications, 3000);
             }
         };
-        
-        
-window.onload = async () => {
-            // 1. クライアント初期化後のチェック
-            await checkUser();
-
-            // 2. 🔧 メンテナンスチェック（最優先で実行）
-            await checkMaintenanceStatus();
-
-            // 3. メンテナンスに引っかかっていなければ通常のロードを続行
-            if (!isMaintenanceActive || (currentUser && currentUser.username === allowedAdminUser)) {
-                postListArea = document.getElementById('postListArea');
-                commentListArea = document.getElementById('commentListArea');
-
-                // ブラウザ通知許可処理など
-                if ('Notification' in window) {
-                    Notification.requestPermission().then(permission => {
-                        if (permission === 'granted') {
-                            console.log('通知が許可されました！');
-                        }
-                    });
-                }
-
-                await fetchAnnouncement();
-                await handleUrlRouting();
-                if (currentUser) {
-                    // 🆕 初回起動時に最新のIDを記憶し、5秒ごとの監視をスタート
-                    await initLatestPostId();
-                    checkNewPostInterval = setInterval(checkNewPosts, 5000);
-                    await checkUnreadNotifications();
-                    setInterval(checkUnreadNotifications, 3000);
-                }
-            }
-        };
-        window.onpopstate = async () => { await handleUrlRouting(); };
 
         window.onpopstate = async () => { await handleUrlRouting(); };
 
@@ -538,15 +443,7 @@ window.onload = async () => {
             });
         }
 
-       async function submitPost() {
-            // 🔧 メンテナンス中のブロックを追加
-            if (isMaintenanceActive && (!currentUser || currentUser.username !== allowedAdminUser)) {
-                alert('ただいまメンテナンス中のため、この操作は行えません。');
-                return;
-            }
-
-            const text = document.getElementById('postText').value.trim();
-            // ... (これ以降は元のコードのまま)
+        async function submitPost() {
             if (!currentUser) return; const text = document.getElementById('postText').value.trim(); const mediaFileInput = document.getElementById('postMediaFile'); const mediaFile = mediaFileInput.files[0]; let mediaUrl = null; if (!text && !mediaFile) return;
             if (mediaFile) { const compressedBlob = await compressImage(mediaFile); const fileName = `${currentUser.id}_${Date.now()}.jpg`; await exClient.storage.from('posts').upload(fileName, compressedBlob, { contentType: 'image/jpeg' }); const { data: { publicUrl } } = exClient.storage.from('posts').getPublicUrl(fileName); mediaUrl = publicUrl; }
             const { data: newPost, error } = await exClient.from('posts').insert([{ user_id: currentUser.id, content: text, media_url: mediaUrl }]).select().single();
@@ -647,12 +544,6 @@ window.onload = async () => {
         function cancelReplyTarget() { activeParentCommentId = null; document.getElementById('replyTargetBadge').classList.add('hidden'); }
 
         async function submitModalComment() {
-            // 🔧 メンテナンス中のブロックを追加
-            if (isMaintenanceActive && (!currentUser || currentUser.username !== allowedAdminUser)) {
-                alert('ただいまメンテナンス中のため、この操作は行えません。');
-                return;
-            }
-            // ... (これ以降は元のコードのまま)
             const input = document.getElementById('modalCommentInput'); const text = input.value.trim(); if (!text || !activePostIdForComment) return;
             const { error } = await exClient.from('comments').insert([{ post_id: activePostIdForComment, user_id: currentUser.id, content: text, parent_id: activeParentCommentId }]);
             if (!error) {
@@ -671,13 +562,6 @@ window.onload = async () => {
 
         async function toggleCommentLike(commentId, isLiked) { if (!currentUser) { alert('ログインが必要です'); return; } if (isLiked) { await exClient.from('comment_likes').delete().eq('comment_id', commentId).eq('user_id', currentUser.id); } else { await exClient.from('comment_likes').insert([{ comment_id: commentId, user_id: currentUser.id }]); } await renderComments(); }
         async function toggleLike(postId, isLiked) { 
-           
-            if (isMaintenanceActive && (!currentUser || currentUser.username !== allowedAdminUser)) {
-                alert('ただいまメンテナンス中のため、この操作は行えません。');
-                return;
-            }
-
-            // ... (これ以降は元のコードのまま)
             if (!currentUser) { alert('ログインが必要です'); return; } 
             if (isLiked) { await exClient.from('likes').delete().eq('post_id', postId).eq('user_id', currentUser.id); } 
             else { await exClient.from('likes').insert([{ post_id: postId, user_id: currentUser.id }]); } 
@@ -789,13 +673,6 @@ window.onload = async () => {
         }
         // 🆕 編集した内容をSupabaseに保存して反映する関数
         async function submitEditPost() {
-            // 🔧 メンテナンス中のブロックを追加
-            if (isMaintenanceActive && (!currentUser || currentUser.username !== allowedAdminUser)) {
-                alert('ただいまメンテナンス中のため、この操作は行えません。');
-                return;
-            }
-
-            // ... (これ以降は元のコードのまま)
             const postId = document.getElementById('editPostId').value;
             const newContent = document.getElementById('editPostText').value.trim();
 
