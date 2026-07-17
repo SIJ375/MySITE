@@ -64,7 +64,12 @@
                 <button onclick="clearSearch()" class="text-gray-400 hover:text-gray-600">&times; 解除</button>
             </div>
         </header>
-
+<div id="newPostAlert" class="hidden text-center my-3 transition-all duration-300">
+            <button onclick="loadNewPosts()" class="bg-green-500 hover:bg-green-600 text-white text-xs font-bold px-4 py-2 rounded-full shadow-md animate-bounce">
+                <i class="fa-solid fa-arrow-up mr-1"></i> 新しい投稿
+            </button>
+        </div>
+        
         <div id="profileBar" class="hidden bg-gray-50 p-3 border-b border-gray-100 text-xs text-gray-600 flex justify-between items-center">
             <div>
                 <span class="font-bold">自己紹介:</span> <span id="myBio">未設定</span>
@@ -117,7 +122,18 @@
     <div id="profileModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center hidden z-50 p-4"><div class="bg-white rounded-lg w-full max-w-md p-6"><div class="flex justify-between items-center mb-4"><h3 class="text-lg font-bold">プロフィール編集</h3><button onclick="closeProfileModal()" class="text-gray-500 hover:text-gray-800 text-xl">&times;</button></div><div class="space-y-4"><div><label class="block text-xs font-bold text-gray-700 mb-1">アイコン画像</label><input id="avatarFile" type="file" accept="image/*" class="w-full text-xs text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-xs file:font-semibold file:bg-green-50 file:text-green-700 hover:file:bg-green-100"></div><div><label class="block text-xs font-bold text-gray-700 mb-1">一言（自己紹介）</label><input id="editBio" type="text" class="w-full border p-2 rounded text-sm" placeholder="今の一言を入力してください"></div><button onclick="saveProfile()" class="w-full bg-green-500 text-white py-2 rounded font-bold hover:bg-green-600 text-sm">保存する</button></div></div></div>
     <div id="postModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center hidden z-50 p-4"><div class="bg-white rounded-lg w-full max-w-md p-6"><div class="flex justify-between items-center mb-4"><h3 class="text-lg font-bold">新規投稿</h3><button onclick="closePostModal()" class="text-gray-500 hover:text-gray-800 text-xl">&times;</button></div><textarea id="postText" class="w-full border border-gray-300 rounded p-2 h-24 resize-none mb-4" placeholder="今なにしてる？ YouTubeのURLを貼ると動画が埋め込まれるよ！"></textarea><label class="block text-xs font-bold text-gray-700 mb-1">画像を追加（任意）</label><input id="postMediaFile" type="file" accept="image/*" class="w-full text-xs text-gray-500 mb-4 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-xs file:font-semibold file:bg-green-50 file:text-green-700 hover:file:bg-green-100"><button onclick="submitPost()" class="w-full bg-green-500 text-white py-2 rounded font-bold hover:bg-green-600">投稿する</button></div></div>
     <div id="announceModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center hidden z-50 p-4"><div class="bg-white rounded-lg w-full max-w-md p-6"><div class="flex justify-between items-center mb-4"><h3 class="text-lg font-bold text-red-600">公式お知らせを投稿</h3><button onclick="closeAnnounceModal()" class="text-gray-500 hover:text-gray-800 text-xl">&times;</button></div><textarea id="announceInputText" class="w-full border border-gray-300 rounded p-2 h-32 resize-none mb-4" placeholder="ユーザー全員に見せる重要なお知らせを入力..."></textarea><button onclick="submitAnnouncement()" class="w-full bg-red-500 text-white py-2 rounded font-bold hover:bg-red-600">お知らせを更新する</button></div></div>
-
+<div id="editPostModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center hidden z-50 p-4">
+        <div class="bg-white rounded-lg w-full max-w-md p-6">
+            <div class="flex justify-between items-center mb-4">
+                <h3 class="text-lg font-bold">投稿を編集</h3>
+                <button onclick="closeEditPostModal()" class="text-gray-500 hover:text-gray-800 text-xl">&times;</button>
+            </div>
+            <input type="hidden" id="editPostId">
+            <textarea id="editPostText" class="w-full border border-gray-300 rounded p-2 h-24 resize-none mb-4" placeholder="投稿を編集します..."></textarea>
+            <button onclick="submitEditPost()" class="w-full bg-green-500 text-white py-2 rounded font-bold hover:bg-green-600">更新する</button>
+        </div>
+    </div>
+    
     <script>
         const EX_URL = "https://kdydbrscxrekivqmplyn.supabase.co";
         const EX_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImtkeWRicnNjeHJla2l2cW1wbHluIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODQxMDk0NjEsImV4cCI6MjA5OTY4NTQ2MX0._sqoMMFn5Zf1m4VarmbkjXpn0H3Tma5qmymI57JkOLA";
@@ -129,15 +145,24 @@
         let isSignUpMode = true;
         let currentSearchWord = "";
         let currentTab = "latest"; 
+        // 🆕 自動更新チェック用の変数を追記
+        let latestPostId = null;
+        let checkNewPostInterval = null;
         
         let activePostIdForComment = null;
         let activeParentCommentId = null;
+        // 🆕 編集中の投稿IDを保存する変数
+        let editingPostId = null;
 
+        
         window.onload = async () => {
             await checkUser();
             await fetchAnnouncement();
             await handleUrlRouting();
             if (currentUser) {
+                // 🆕 初回起動時に最新のIDを記憶し、5秒ごとの監視をスタート
+            await initLatestPostId();
+            checkNewPostInterval = setInterval(checkNewPosts, 5000);
                 await checkUnreadNotifications();
                 setInterval(checkUnreadNotifications, 3000);
             }
@@ -236,7 +261,11 @@
 
         async function fetchAnnouncement() {
             const { data, error } = await exClient.from('announcements').select('content').order('created_at', { ascending: false }).limit(1);
-            if (!error && data && data.length > 0) document.getElementById('announceText').innerText = data[0].content;
+            if (!error && data && data.length > 0) {
+                document.getElementById('announceText').innerText = data[0].content;
+                // ⬇️ この1行を追加して非表示を解除します
+                document.getElementById('announceArea').classList.remove('hidden');
+            }
         }
 
         async function submitAnnouncement() {
@@ -393,14 +422,21 @@
                             <img src="${authorAvatar}" class="w-10 h-10 rounded-full border mr-3 object-cover">
                             <span class="font-bold text-gray-800 hover:underline">${authorName}</span>
                         </div>
-                        ${isMyPost ? `<button onclick="deletePost(${post.id})" class="text-gray-400 hover:text-red-500"><i class="fa-solid fa-trash-can"></i></button>` : ''}
+                       ${isMyPost ? `
+    <div class="flex space-x-3 items-center">
+        <button onclick="openEditPostModal(${post.id}, \`${post.content.replace(/`/g, '\\`').replace(/\n/g, '\\n')}\`)" class="text-gray-400 hover:text-blue-500 text-xs font-bold transition"><i class="fa-solid fa-pen mr-1"></i>編集</button>
+        <button onclick="deletePost(${post.id})" class="text-gray-400 hover:text-red-500 transition"><i class="fa-solid fa-trash-can"></i></button>
+    </div>
+` : ''}
                     </div>
                     <div class="px-3 pb-3 text-gray-800 text-sm whitespace-pre-wrap">${parseRichText(post.content)}</div>
                     ${videoEmbedHtml}
                     ${post.media_url ? `<div class="w-full bg-black flex justify-center"><img src="${post.media_url}" class="max-h-96 w-full object-cover"></div>` : ''}
-                    <div class="p-3 border-t border-gray-100 flex items-center space-x-6">
+                  <div class="p-3 border-t border-gray-100 flex items-center space-x-6">
                         <button onclick="toggleLike(${post.id}, ${post.isLiked})" class="flex items-center space-x-1 ${post.isLiked ? 'text-red-500' : 'text-gray-400'} hover:scale-105 transition"><i class="${post.isLiked ? 'fa-solid' : 'fa-regular'} fa-heart text-lg"></i><span class="text-xs font-bold">${post.likeCount}</span></button>
                         <button onclick="openCommentModal(${post.id})" class="flex items-center space-x-1 text-gray-400 hover:text-green-500 transition"><i class="fa-regular fa-comment text-lg"></i><span class="text-xs font-bold">${post.commentCount}</span></button>
+                        
+                        <button onclick="sharePost(${post.id})" class="flex items-center space-x-1 text-gray-400 hover:text-blue-500 transition" title="リンクをコピー"><i class="fa-regular fa-share-from-square text-lg"></i><span class="text-xs font-bold">シェア</span></button>
                     </div>
                 `;
                 timeline.appendChild(postCard);
@@ -584,6 +620,80 @@
         function openUserSearchModal() { document.getElementById('userSearchModal').classList.remove('hidden'); document.getElementById('userQueryInput').value = ''; searchUsers(); }
         function closeUserSearchModal() { document.getElementById('userSearchModal').classList.add('hidden'); }
         function toggleAuthMode() { isSignUpMode = !isSignUpMode; document.getElementById('authTitle').innerText = isSignUpMode ? '簡易アカウント作成' : 'ログイン'; document.getElementById('authSubmitBtn').innerText = isSignUpMode ? 'アカウントを作成する' : 'ログインする'; document.getElementById('authPasswordConfirm').classList.toggle('hidden', !isSignUpMode); }
+
+        // 🆕 投稿の個別リンクをクリップボードにコピーする関数
+        async function sharePost(postId) {
+            // 現在のページのURLの末尾に「#/post/投稿ID」をくっつける
+            const shareUrl = `${window.location.origin}${window.location.pathname}#/post/${postId}`;
+            
+            try {
+                await navigator.clipboard.writeText(shareUrl);
+                alert('投稿のリンクをクリップボードにコピーしました！');
+            } catch (err) {
+                alert('コピーに失敗しました。');
+            }
+        }
+        // 🆕 最新の投稿IDを取得する関数
+        async function initLatestPostId() {
+            const { data, error } = await exClient.from('posts').select('id').order('created_at', { ascending: false }).limit(1).maybeSingle();
+            if (!error && data) { latestPostId = data.id; }
+        }
+
+        // 🆕 5秒ごとに新しい投稿があるか調べる関数
+        async function checkNewPosts() {
+            // 最新タブかつ検索中でない場合のみチェック
+            if (currentTab !== 'latest' || currentSearchWord) return;
+            
+            const { data, error } = await exClient.from('posts').select('id').order('created_at', { ascending: false }).limit(1).maybeSingle();
+            if (!error && data && latestPostId) {
+                if (data.id > latestPostId) {
+                    document.getElementById('newPostAlert').classList.remove('hidden');
+                }
+            }
+        }
+
+        // 🆕 「新しい投稿」ボタンが押された時の更新処理
+        async function loadNewPosts() {
+            document.getElementById('newPostAlert').classList.add('hidden');
+            await initLatestPostId();
+            await fetchAndRenderPosts();
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+        // 🆕 編集モーダルを開閉する関数
+        function openEditPostModal(postId, currentContent) {
+            editingPostId = postId;
+            document.getElementById('editPostId').value = postId;
+            document.getElementById('editPostText').value = currentContent;
+            document.getElementById('editPostModal').classList.remove('hidden');
+        }
+
+        function closeEditPostModal() {
+            document.getElementById('editPostModal').classList.add('hidden');
+            editingPostId = null;
+        }
+        // 🆕 編集した内容をSupabaseに保存して反映する関数
+        async function submitEditPost() {
+            const postId = document.getElementById('editPostId').value;
+            const newContent = document.getElementById('editPostText').value.trim();
+
+            if (!newContent) {
+                alert('投稿内容を入力してください。');
+                return;
+            }
+
+            const { error } = await exClient
+                .from('posts')
+                .update({ content: newContent })
+                .eq('id', postId);
+
+            if (error) {
+                alert('投稿の更新に失敗しました。');
+                console.error(error);
+            } else {
+                closeEditPostModal();
+                await fetchAndRenderPosts(); // タイムラインを再読込
+            }
+        }
     </script>
 </body>
 </html>
