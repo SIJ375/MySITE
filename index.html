@@ -652,8 +652,6 @@ window.onload = async () => {
                 alert('ただいまメンテナンス中のため、この操作は行えません。');
                 return;
             }
-
-            const text = document.getElementById('commentText').value.trim();
             // ... (これ以降は元のコードのまま)
             const input = document.getElementById('modalCommentInput'); const text = input.value.trim(); if (!text || !activePostIdForComment) return;
             const { error } = await exClient.from('comments').insert([{ post_id: activePostIdForComment, user_id: currentUser.id, content: text, parent_id: activeParentCommentId }]);
@@ -797,7 +795,6 @@ window.onload = async () => {
                 return;
             }
 
-            const postId = document.getElementById('editPostId').value;
             // ... (これ以降は元のコードのまま)
             const postId = document.getElementById('editPostId').value;
             const newContent = document.getElementById('editPostText').value.trim();
